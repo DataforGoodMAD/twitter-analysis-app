@@ -18,13 +18,6 @@ logger = logging.getLogger('debug_logger')
 logger.info('logger working')
 
 
-class TwitterMining:
-    def __init__(self, ):
-        pass
-
-    def user_timeline(self, ):
-
-
 class TwitterProcessor:
 
     def __init__(self, counter=Counter(), lemmatizer=WordNetLemmatizer()):
@@ -48,7 +41,7 @@ class TwitterProcessor:
         self.__stopWords.update(set(lst))
         return f'Added to stopwords: {lst}'
 
-    def tweetPreprocessor(self, tweet_text):
+    def tweetPreprocessor(self, tweet):
         """
         Makes lowercase. 
         Removes punctuation, stopwords, urls & numerics. 

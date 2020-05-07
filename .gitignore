@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 documentation
 output
+.vscode
+twitterdb.db
