@@ -23,7 +23,7 @@ class TwitterProcessor:
     def __init__(self, counter=Counter(), lemmatizer=WordNetLemmatizer()):
         
         self.__counter = counter
-        self.__lemmatizer = lemmatizer
+        self.lemmatizer = lemmatizer
         self.__punctuation = '¡!"$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
         self.__stopWords = set(stopwords.words('spanish') + stopwords.words('english'))
 
@@ -41,7 +41,7 @@ class TwitterProcessor:
         self.__stopWords.update(set(lst))
         return f'Added to stopwords: {lst}'
 
-    def tweetPreprocessor(self, tweet):
+    def tweetPreprocessor(self, tweet_text):
         """
         Makes lowercase. 
         Removes punctuation, stopwords, urls & numerics. 
@@ -61,17 +61,22 @@ class TwitterProcessor:
 
         return token_list
 
+    def getTweetHashtags(self, tweet_text):
+        tokens = tweetPreprocessor(tweet)
+        return re.findall(r'#\w+', tokens)
+
+
+    @property
+    def getCounter(self):
+        return self.__counter
+
+
     def updateCounter(self, token_list):
         self.__counter.update(token_list)
-        print()
+        return self.__counter
 
     def getMostCommonTokens(self, top=10):
         return self.__counter.most_common()[0:top]
-
-    def getTweetHashtags(self, tweet_text):
-        
-        return 
-
     
 
 

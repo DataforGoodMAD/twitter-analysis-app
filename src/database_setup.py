@@ -19,12 +19,18 @@ class AccountTimeline(Base):
     user_id = Column(INTEGER)
     created_at = Column(DATETIME)
     full_text = Column(VARCHAR(300))
+    hashtags = Column(VARCHAR(300))
     truncated = Column(INTEGER)
     display_text_range = Column(VARCHAR(100))
     retweet_count = Column(INTEGER)
     favorite_count = Column(INTEGER)
     possibly_sensitive = Column(BOOLEAN)
 
+class TokensCount(Base):
+    id = Column(INTEGER, primary_key=True)
+    token = Column(VARCHAR(300))
+    cumulated_count = Column(INTEGER)
+    last_updated = Column(DATETIME)
 
 class User(Base):
 
