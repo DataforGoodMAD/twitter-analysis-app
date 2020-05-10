@@ -4,13 +4,14 @@ import tweepy
 from sqlalchemy import func
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
-from database_setup import AccountTimeline, User, Tweet
+from db_models import AccountTimeline, User, Tweet
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
 class TwitterMiner:
+    # TODO: Split this class into two: One for the API requests, one for the interactions with the DB.
 
     def __init__(self, username):
 
@@ -92,12 +93,9 @@ class TwitterMiner:
 
         self.session.commit()
 
-    def postCountertoDB(self, counter):
-
-
+    def postTokenstoDB(self, counter):
+        pass
 
 
 if __name__ == "__main__":
-    miner = TwitterMiner(username='helsinkiespana')
-    cursor = miner.timelineCursorRequest(user_id=miner.username, limit=2)
-    miner.postTweetToDatabase(cursor)
+    pass

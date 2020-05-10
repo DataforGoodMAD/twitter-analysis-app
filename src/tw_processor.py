@@ -24,22 +24,22 @@ class TwitterProcessor:
 
         self.__counter = counter
         self.lemmatizer = lemmatizer
-        self.__punctuation = '¡!"$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
-        self.__stopWords = set(stopwords.words(
+        self.punctuation = '¡!"$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+        self.stopWords = set(stopwords.words(
             'spanish') + stopwords.words('english'))
 
     def __repr__(self):
         return(f"""
         TweetsProcessor object:
         Counter: {self.__counter}
-        Lemmatizer: {self.__lemmatizer}
+        Lemmatizer: {self.lemmatizer}
         """)
 
     def __str__(self):
         return(f"TweetsProcessor object")
 
     def addStopWords(self, lst):
-        self.__stopWords.update(set(lst))
+        self.stopWords.update(set(lst))
         return f'Added to stopwords: {lst}'
 
     def tweetPreprocessor(self, tweet_text):
@@ -50,21 +50,21 @@ class TwitterProcessor:
         Returns a list of tokens.
         """
 
-        tweet = re.sub(r'http\S*', '', tweet)  # remove URLs
+        tweet = re.sub(r'http\S*', '', tweet_text)  # remove URLs
         tweet = unicodedata.normalize(
             'NFKD', tweet).encode('ASCII', 'ignore').decode('utf-8')  # remove accents
-        words = str(tweet).translate(str.maketrans('', '', punctuation)
+        words = str(tweet).translate(str.maketrans('', '', self.punctuation)
                                      ).lower().split()  # lowercase & punctuation
-        token_list = [lemmatizer.lemmatize(word)
+        token_list = [self.lemmatizer.lemmatize(word)
                       for word in words
-                      if word not in stop_words and not word.isnumeric() and len(word) > 2]  # lemmatize & remove numerics
+                      if word not in self.stopWords and not word.isnumeric() and len(word) > 2]  # lemmatize & remove numerics
 
         logger.info(f'Tokens created: {token_list}')
 
         return token_list
 
     def getTweetHashtags(self, tweet_text):
-        tokens = tweetPreprocessor(tweet)
+        tokens = self.tweetPreprocessor(tweet_text)
         return re.findall(r'#\w+', tokens)
 
     @property

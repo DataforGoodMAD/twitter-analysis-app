@@ -1,14 +1,13 @@
 import logging
 
-from sqlalchemy import Column, ForeignKey, INTEGER, VARCHAR, DATETIME
-from sqlalchemy.dialects.sqlite import DATETIME, BOOLEAN, INTEGER, VARCHAR 
+from sqlalchemy import Column, ForeignKey
+from sqlalchemy.dialects.sqlite import DATETIME, BOOLEAN, INTEGER, VARCHAR
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
 
-Base = declarative_base()
-
 engine = create_engine('sqlite:///./twitterdb.db', echo=True)
+Base = declarative_base()
 
 
 class AccountTimeline(Base):
@@ -26,11 +25,17 @@ class AccountTimeline(Base):
     favorite_count = Column(INTEGER)
     possibly_sensitive = Column(BOOLEAN)
 
+
 class TokensCount(Base):
-    id = Column(INTEGER, primary_key=True)
+
+    __tablename__ = 'tokens_count'
+
+    id = Column(INTEGER, primary_key=True, autoincrement=True)
     token = Column(VARCHAR(300))
     cumulated_count = Column(INTEGER)
+    is_hashtag = Column(BOOLEAN)
     last_updated = Column(DATETIME)
+
 
 class User(Base):
 
