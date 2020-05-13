@@ -1,22 +1,20 @@
-import os
 import logging
+import os
+
 import tweepy
-from sqlalchemy import func
-from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy import create_engine
-from db_models import AccountTimeline, User, Tweet
 from dotenv import load_dotenv
+
+from db_queries import DBQueries
 
 load_dotenv()
 
 
 class TwitterMiner:
-    # TODO: Split this class into two: One for the API requests, one for the interactions with the DB.
 
-    def __init__(self, username):
+    def __init__(self):
 
         # Main User
-        self.username = username
+        self.username = os.getenv('username')
 
         # Connection to Twitter API
         self.consumer_key = os.environ.get('CONSUMER_KEY')
@@ -26,75 +24,34 @@ class TwitterMiner:
         self.api = tweepy.API(
             self.auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
-        # Connection to Database
-        self.engine = create_engine('sqlite:///./twitterdb.db', echo=False)
-        self.Session = sessionmaker(bind=self.engine)
-        self.session = self.Session()
+        # DB Connection
+        self.db_queries = DBQueries()
 
-    def __repr__(self):
-        return f'TwitterMiner Instance. Connected to API: {self.api} and Database: {self.engine}'
-
-    def timelineCursorRequest(self, user_id, include_rts=False, exclude_replies=True, limit=200, since_id=None):
+    def timelineCursor(self, username, include_rts=False, exclude_replies=True, limit=200, since_id=None):
         """
-        Set limit to None to try to retrieve the full timeline.
+        Set limit to 0 to try to retrieve the full timeline.
         This method returns a cursor, but you have to iterate over it to make the requests.
         """
 
-        if not limit or limit > 200:
+        if limit == 0 or limit > 200:
             counter = 200
         else:
             counter = limit
         logging.info(f'limit = {limit}, counter = {counter}')
 
         if not since_id:
-            since_id = self.session.query(
-                func.max(AccountTimeline.tweet_id)).one()
+            since_id = self.db_queries.topTweetId()
             if since_id:
                 since_id = since_id[0]
         logging.info(f'since_id = {since_id}')
         print(f'since_id = {since_id}')
         return tweepy.Cursor(self.api.user_timeline,
-                             id=user_id,
+                             id=username,
                              tweet_mode='extended',
                              since_id=since_id,
                              include_rts=include_rts,
                              exclude_replies=exclude_replies,
                              count=counter).items(limit)
-
-    def postTweetToDB(self, cursor):
-        """
-        Status is the tweet object returned by Tweepy.
-        """
-
-        for status in cursor:
-            try:
-                params = {
-                    'tweet_id': status.id,
-                    'user_id': status.author.id,
-                    'created_at': status.created_at,
-                    'full_text': status.full_text,
-                    'hashtags': str(list(map(lambda hashtag: hashtag['text'], status._json.get('entities', None).get('hashtags', None)))),
-                    'truncated': status.truncated,
-                    'display_text_range': str(status.display_text_range),
-                    'retweet_count': status.retweet_count,
-                    'favorite_count': status.favorite_count,
-                    'possibly_sensitive': status.possibly_sensitive,
-                }
-
-                if status.author.screen_name == self.username:
-                    tweet = AccountTimeline(**params)
-                else:
-                    tweet = Tweet(**params)
-
-                self.session.add(tweet)
-
-            except Exception as e:
-                logging.error(e)
-
-        self.session.commit()
-
-    def postTokenstoDB(self, counter):
-        pass
 
 
 if __name__ == "__main__":

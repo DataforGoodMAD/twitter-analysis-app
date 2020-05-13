@@ -44,7 +44,7 @@ class TwitterProcessor:
 
     def tweetPreprocessor(self, tweet_text):
         """
-        Makes lowercase. 
+        Makes lowercase.
         Removes punctuation, stopwords, urls & numerics. 
         Lemmatize.
         Returns a list of tokens.
@@ -68,12 +68,11 @@ class TwitterProcessor:
         return re.findall(r'#\w+', tokens)
 
     @property
-    def getCounter(self):
+    def counter(self):
         return self.__counter
 
     def updateCounter(self, token_list):
-        self.__counter.update(token_list)
-        return self.__counter
+        self.counter.update(token_list)
 
     def getMostCommonTokens(self, top=10):
-        return self.__counter.most_common()[0:top]
+        return self.counter.most_common()[0:top]

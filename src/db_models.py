@@ -23,7 +23,6 @@ class AccountTimeline(Base):
     display_text_range = Column(VARCHAR(100))
     retweet_count = Column(INTEGER)
     favorite_count = Column(INTEGER)
-    possibly_sensitive = Column(BOOLEAN)
 
 
 class TokensCount(Base):
@@ -69,7 +68,6 @@ class Tweet(Base):
     display_text_range = Column(VARCHAR(100))
     retweet_count = Column(INTEGER)
     favorite_count = Column(INTEGER)
-    possibly_sensitive = Column(BOOLEAN)
 
     user = relationship("User", back_populates="tweets")
 
