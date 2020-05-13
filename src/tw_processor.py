@@ -42,7 +42,7 @@ class TwitterProcessor:
         self.stopWords.update(set(lst))
         return f'Added to stopwords: {lst}'
 
-    def tweetPreprocessor(self, tweet_text):
+    def tweetTokenizer(self, tweet_text):
         """
         Makes lowercase.
         Removes punctuation, stopwords, urls & numerics. 
@@ -64,7 +64,7 @@ class TwitterProcessor:
         return token_list
 
     def getTweetHashtags(self, tweet_text):
-        tokens = self.tweetPreprocessor(tweet_text)
+        tokens = self.tweetTokenizer(tweet_text)
         return re.findall(r'#\w+', tokens)
 
     @property

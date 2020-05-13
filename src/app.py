@@ -26,7 +26,7 @@ def updateTimeline(processor, queries, cursor):
         tweet_object = queries.tweetToDB(tweet)
         if tweet_object:
             queries.session.add(tweet_object)
-            tokens_list = processor.tweetPreprocessor(tweet.full_text)
+            tokens_list = processor.tweetTokenizer(tweet.full_text)
             processor.updateCounter(tokens_list)
             print(f'tweet: {tweet.id}, processed')
 
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         tweet_object = queries.tweetToDB(tweet)
         if tweet_object:
             queries.session.add(tweet_object)
-            tokens_list = processor.tweetPreprocessor(tweet.full_text)
+            tokens_list = processor.tweetTokenizer(tweet.full_text)
             processor.updateCounter(tokens_list)
             print(f'tweet: {tweet.id}, processed')
 

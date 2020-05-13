@@ -27,6 +27,18 @@ class TwitterMiner:
         # DB Connection
         self.db_queries = DBQueries()
 
+    def limitHandler(Self, limit):
+        if limit == 0 or limit > 200:
+            count = 200
+        else:
+            count = limit
+        logging.info(f'limit = {limit}, count = {count}')
+        return limit, count
+
+    # TODO: Decorator for 403 error: forbiddenRequestHandler
+    def forbiddenRequestHandler():
+        pass
+
     def timelineCursor(self, username, include_rts=False, exclude_replies=True, limit=200, since_id=None):
         """
         Set limit to 0 to try to retrieve the full timeline.
@@ -34,10 +46,10 @@ class TwitterMiner:
         """
 
         if limit == 0 or limit > 200:
-            counter = 200
+            count = 200
         else:
-            counter = limit
-        logging.info(f'limit = {limit}, counter = {counter}')
+            count = limit
+        logging.info(f'limit = {limit}, count = {count}')
 
         if not since_id:
             since_id = self.db_queries.topTweetId()
@@ -51,7 +63,16 @@ class TwitterMiner:
                              since_id=since_id,
                              include_rts=include_rts,
                              exclude_replies=exclude_replies,
-                             count=counter).items(limit)
+                             count=count).items(limit)
+
+    def followersCursor(self, screen_name):
+
+        limit, count = self.limitHandler(limit)
+
+        return tweepy.Cursor(api.followers,
+                             id=screen_name,
+
+                             count=count).items(limit)
 
 
 if __name__ == "__main__":
