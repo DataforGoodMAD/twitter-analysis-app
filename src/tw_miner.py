@@ -27,16 +27,16 @@ class TwitterMiner:
         # DB Connection
         self.db_queries = DBQueries()
 
-    def limitHandler(Self, limit):
+    def countHandler(self, limit):
         if limit == 0 or limit > 200:
             count = 200
         else:
             count = limit
         logging.info(f'limit = {limit}, count = {count}')
-        return limit, count
+        return count
 
     # TODO: Decorator for 403 error: forbiddenRequestHandler
-    def forbiddenRequestHandler():
+    def forbiddenRequestHandler(self,):
         pass
 
     def timelineCursor(self, username, include_rts=False, exclude_replies=True, limit=200, since_id=None):
@@ -44,12 +44,12 @@ class TwitterMiner:
         Set limit to 0 to try to retrieve the full timeline.
         This method returns a cursor, but you have to iterate over it to make the requests.
         """
-
-        if limit == 0 or limit > 200:
-            count = 200
-        else:
-            count = limit
-        logging.info(f'limit = {limit}, count = {count}')
+        count = self.countHandler(limit)
+        # if limit == 0 or limit > 200:
+        #     count = 200
+        # else:
+        #     count = limit
+        # logging.info(f'limit = {limit}, count = {count}')
 
         if not since_id:
             since_id = self.db_queries.topTweetId()
@@ -65,14 +65,23 @@ class TwitterMiner:
                              exclude_replies=exclude_replies,
                              count=count).items(limit)
 
-    def followersCursor(self, screen_name):
+    def followersCursor(self, screen_name, limit=200):
 
-        limit, count = self.limitHandler(limit)
+        count = self.countHandler(limit)
 
-        return tweepy.Cursor(api.followers,
-                             id=screen_name,
+        cursor = tweepy.Cursor(self.api.followers,
+                               id=screen_name,
+                               count=count).pages(round(limit/200))
 
-                             count=count).items(limit)
+        if screen_name == self.username:
+            return cursor
+
+        else:
+            user_reviewed = self.db_queries.checkUserReviewed(screen_name)
+            if user_reviewed:
+                print(f'User {screen_name} already reviewed.')
+                return []
+            return cursor
 
 
 if __name__ == "__main__":

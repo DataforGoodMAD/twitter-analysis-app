@@ -27,7 +27,7 @@ class DBQueries:
             func.max(AccountTimeline.tweet_id)).one()
 
     def tweetToDB(self, status):
-        """Map a Status object from Tweepy to a tweet object for the database model. 
+        """Map a Status object from Tweepy to a tweet object for the database model.
         This method identifies whether the tweets came from the main user, or from other accounts
 
         Arguments:
@@ -85,6 +85,48 @@ class DBQueries:
                 )
             token_object_list.append(token_object)
         return token_object_list
+
+    def userToDB(self, user):
+        # TODO: Revisar como conseguir el "is_friend" en el endpoint de "friendships". Ver como actualizar el reviewed.
+
+        try:
+            params = {
+                'user_id': user.id,
+                'screen_name': user.screen_name,
+                'location': user.location,
+                'protected': user.protected,
+                'followers_count': user.followers_count,
+                'friends_count': user.friends_count,
+                'created_at': user.created_at,
+                'favourites_count': user.favourites_count,
+                'statuses_count': user.statuses_count,
+                'lang': user.lang,
+                'default_profile_image': user.default_profile_image,
+                'is_follower': 1,
+                'is_friend': 0,
+                'last_status': (user.status.created_at if hasattr(user, 'status') else None),
+                'reviewed': 0
+            }
+
+            user_object = User(**params)
+            return user_object
+
+        except Exception as e:
+            print(e)
+
+    def checkUserReviewed(self, screen_name):
+        """Check whether the user has been marked as reviewed in the database.
+
+        Arguments:
+            screen_name {[string]} -- [User screen_name to check]
+
+        Returns:
+            [bool] -- [True if has been already reviewed]
+        """
+        return self.session.query(User.screen_name).filter(User.reviewed == True)
+
+    def listUserIds(self):
+        return self.session.query(User.user_id).all()
 
 
 if __name__ == "__main__":

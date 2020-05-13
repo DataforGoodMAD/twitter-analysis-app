@@ -6,7 +6,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
 
-engine = create_engine('sqlite:///./twitterdb.db', echo=True)
 Base = declarative_base()
 
 
@@ -51,9 +50,10 @@ class User(Base):
     statuses_count = Column(INTEGER)
     lang = Column(VARCHAR(100))
     default_profile_image = Column(BOOLEAN)
-    is_follower = Column(BOOLEAN)
-    is_friend = Column(BOOLEAN)
-    status = Column(INTEGER)
+    is_follower = Column(BOOLEAN, nullable=True)
+    is_friend = Column(BOOLEAN, nullable=True)
+    last_status = Column(DATETIME, nullable=True)
+    reviewed = Column(BOOLEAN)
 
 
 class Tweet(Base):
@@ -77,6 +77,7 @@ User.tweets = relationship(
 
 
 if __name__ == "__main__":
+    engine = create_engine('sqlite:///./twitterdb.db', echo=True)
     try:
         Base.metadata.create_all(engine)
         logging.info("Tables created")

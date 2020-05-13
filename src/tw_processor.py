@@ -76,3 +76,6 @@ class TwitterProcessor:
 
     def getMostCommonTokens(self, top=10):
         return self.counter.most_common()[0:top]
+
+    def loadCounterFromDB(self):
+        pass
