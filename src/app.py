@@ -6,6 +6,8 @@ from tw_miner import TwitterMiner
 from tw_processor import TwitterProcessor
 from db_queries import DBQueries
 
+from itertools import takewhile
+
 load_dotenv()
 
 logger = logging.getLogger('log')
@@ -31,7 +33,7 @@ def updateTimeline(processor, queries, miner):
             print(f'tweet: {tweet.id}, processed')
 
     queries.session.commit()
-    print("Session Commited")
+    print("Update Timeline: Done")
 
 
 def updateTokensCount(processor, queries):
@@ -44,26 +46,30 @@ def updateTokensCount(processor, queries):
     token_object_list = queries.tokenstoDB(processor.counter)
     queries.session.add_all(token_object_list)
     queries.session.commit()
-    print("Session Commited")
+    print("Update Tokens: Done")
 
 
-def updateFollowers(queries, miner):
+def updateFollowers(queries, miner, target_user):
 
-    stored_users = queries.listUserIds()
-    cursor = miner.followersCursor(screen_name=miner.username, limit=0)
+    stored_users = queries.listUsers()
+    cursor = miner.followersCursor(screen_name=target_user, limit=200)
+
+    # user_objects_list = [queries.userToDB(user) for user in takewhile(
+    #     lambda u: (u.id, u.screen_name) not in stored_users, cursor)]
+
     user_objects_list = []
-    for page in cursor:
-
-        for user in page:
-            user_object = queries.userToDB(user)
-        user_objects_list.append(user_object)
-
-        if page[-1].id in stored_users:
+    for user in cursor:
+        if (user.id, user.screen_name) in stored_users:
             break
+        else:
+            user.is_friend = 1 if user.id in miner.friendsList else 0
+            user.is_follower = 1 if target_user == miner.username else 0
+            user_object = queries.userToDB(user)
+            user_objects_list.append(user_object)
 
     queries.session.add_all(user_objects_list)
     queries.session.commit()
-    print("Session Commited")
+    print("Update Followers: Done")
 
 
 if __name__ == "__main__":
@@ -73,4 +79,4 @@ if __name__ == "__main__":
 
     updateTimeline(processor, queries, miner)
     updateTokensCount(processor, queries)
-    updateFollowers(queries, miner)
+    updateFollowers(queries, miner, miner.username)

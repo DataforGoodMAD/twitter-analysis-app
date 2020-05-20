@@ -24,10 +24,22 @@ class TwitterMiner:
         self.api = tweepy.API(
             self.auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
+        # API request. List of users followed by the main account.
+        self.friendsList = self.api.friends_ids(screen_name=self.username)
+
         # DB Connection
         self.db_queries = DBQueries()
 
     def countHandler(self, limit):
+        """Tweepy helper function. Handles the number of items per page depending on the number of items requested.
+
+        Arguments:
+            limit {int} -- Total number of items requested.
+
+        Returns:
+            int -- Number of items per page.
+        """
+
         if limit == 0 or limit > 200:
             count = 200
         else:
@@ -36,7 +48,7 @@ class TwitterMiner:
         return count
 
     # TODO: Decorator for 403 error: forbiddenRequestHandler
-    def forbiddenRequestHandler(self,):
+    def maxRequestsHandler(self):
         pass
 
     def timelineCursor(self, username, include_rts=False, exclude_replies=True, limit=200, since_id=None):
@@ -45,11 +57,6 @@ class TwitterMiner:
         This method returns a cursor, but you have to iterate over it to make the requests.
         """
         count = self.countHandler(limit)
-        # if limit == 0 or limit > 200:
-        #     count = 200
-        # else:
-        #     count = limit
-        # logging.info(f'limit = {limit}, count = {count}')
 
         if not since_id:
             since_id = self.db_queries.topTweetId()
@@ -66,12 +73,12 @@ class TwitterMiner:
                              count=count).items(limit)
 
     def followersCursor(self, screen_name, limit=200):
-
+        # TODO: include db check for stored users in this method. Check the last User on a page, and stop requesting more pages if the user is already stored in the database.
         count = self.countHandler(limit)
 
         cursor = tweepy.Cursor(self.api.followers,
                                id=screen_name,
-                               count=count).pages(round(limit/200))
+                               count=count).items(limit)
 
         if screen_name == self.username:
             return cursor
@@ -82,6 +89,19 @@ class TwitterMiner:
                 print(f'User {screen_name} already reviewed.')
                 return []
             return cursor
+
+    def updateFriendsList(self):
+        self.friendsList = self.api.friends_ids(screen_name=self.username)
+        return self.friendsList
+
+    def searchCursor(self, query, result_type='recent', limit=200):
+
+        count = self.countHandler(limit)
+
+        return tweepy.Cursor(self.api.search,
+                             q=query,
+                             result_type=result_type,
+                             count=count).items(limit)
 
 
 if __name__ == "__main__":

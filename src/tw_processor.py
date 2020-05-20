@@ -19,7 +19,7 @@ logger.info('logger working')
 
 
 class TwitterProcessor:
-
+    # TODO: revisar idioma del lemmatizer. Configuración de idioma.
     def __init__(self, counter=Counter(), lemmatizer=WordNetLemmatizer()):
 
         self.__counter = counter
@@ -57,7 +57,7 @@ class TwitterProcessor:
                                      ).lower().split()  # lowercase & punctuation
         token_list = [self.lemmatizer.lemmatize(word)
                       for word in words
-                      if word not in self.stopWords and not word.isnumeric() and len(word) > 2]  # lemmatize & remove numerics
+                      if word not in self.stopWords and not word.isnumeric() and len(word) > 2]  # lemmatizee, remove numerics & remove tokens with less than 3 letters.
 
         logger.info(f'Tokens created: {token_list}')
 

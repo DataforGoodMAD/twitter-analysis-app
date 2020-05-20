@@ -64,25 +64,27 @@ class DBQueries:
         """Transforms a Counter object to a list of objects of the TokensCount model.
 
         Arguments:
-            counter {[type]} -- [description]
+            counter {Counter} -- [Counter from collections with tokens as keys and the ocurrences of each one on a set of tweets as value.]
         """
-        existent_tokens = self.session.query(TokensCount.token).all()
+        keys = counter.elements()  # List of Tokens
+
+        tokens_query = self.session.query(TokensCount).filter(
+            TokensCount.token.in_(keys)).all()
+
+        for token_object in tokens_query:
+            if token_object.token in keys:
+                token_object.cumulated_count += counter.get(token_object.token)
+                token_object.last_updated = datetime.now()
+                del counter[token_object.token]
+
         token_object_list = []
         for token, value in counter.items():
-            if token in existent_tokens:
-                token_object = TokensCount(
-                    token=token,
-                    cumulated_count=value,
-                    is_hashtag=True if re.match(r'^#', token) else False,
-                    last_updated=datetime.now()
-                )
-            else:
-                token_object = TokensCount(
-                    token=token,
-                    cumulated_count=value,
-                    is_hashtag=True if re.match(r'^#', token) else False,
-                    last_updated=datetime.now()
-                )
+            token_object = TokensCount(
+                token=token,
+                cumulated_count=value,
+                is_hashtag=True if re.match(r'^#', token) else False,
+                last_updated=datetime.now()
+            )
             token_object_list.append(token_object)
         return token_object_list
 
@@ -102,8 +104,8 @@ class DBQueries:
                 'statuses_count': user.statuses_count,
                 'lang': user.lang,
                 'default_profile_image': user.default_profile_image,
-                'is_follower': 1,
-                'is_friend': 0,
+                'is_follower': user.is_follower,
+                'is_friend': user.is_friend,
                 'last_status': (user.status.created_at if hasattr(user, 'status') else None),
                 'reviewed': 0
             }
@@ -125,8 +127,8 @@ class DBQueries:
         """
         return self.session.query(User.screen_name).filter(User.reviewed == True)
 
-    def listUserIds(self):
-        return self.session.query(User.user_id).all()
+    def listUsers(self):
+        return self.session.query(User.user_id, User.screen_name).all()
 
 
 if __name__ == "__main__":
