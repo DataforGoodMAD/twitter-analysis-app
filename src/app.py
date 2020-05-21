@@ -30,7 +30,6 @@ def updateTimeline(processor, queries, miner):
             queries.session.add(tweet_object)
             tokens_list = processor.tweetTokenizer(tweet.full_text)
             processor.updateCounter(tokens_list)
-            print(f'tweet: {tweet.id}, processed')
 
     queries.session.commit()
     print("Update Timeline: Done")
@@ -54,22 +53,24 @@ def updateFollowers(queries, miner, target_user):
     stored_users = queries.listUsers()
     cursor = miner.followersCursor(screen_name=target_user, limit=200)
 
-    # user_objects_list = [queries.userToDB(user) for user in takewhile(
-    #     lambda u: (u.id, u.screen_name) not in stored_users, cursor)]
-
     user_objects_list = []
     for user in cursor:
         if (user.id, user.screen_name) in stored_users:
             break
         else:
             user.is_friend = 1 if user.id in miner.friendsList else 0
-            user.is_follower = 1 if target_user == miner.username else 0
+            user.is_follower = 1 if user.id in miner.followersList else 0
             user_object = queries.userToDB(user)
             user_objects_list.append(user_object)
 
     queries.session.add_all(user_objects_list)
     queries.session.commit()
+
     print("Update Followers: Done")
+
+
+def secondGradeSearch(miner, processor, queries):
+    pass
 
 
 if __name__ == "__main__":

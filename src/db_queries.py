@@ -79,13 +79,14 @@ class DBQueries:
 
         token_object_list = []
         for token, value in counter.items():
-            token_object = TokensCount(
-                token=token,
-                cumulated_count=value,
-                is_hashtag=True if re.match(r'^#', token) else False,
-                last_updated=datetime.now()
-            )
-            token_object_list.append(token_object)
+            if len(token) > 2:
+                token_object = TokensCount(
+                    token=token,
+                    cumulated_count=value,
+                    is_hashtag=True if re.match(r'^#', token) else False,
+                    last_updated=datetime.now()
+                )
+                token_object_list.append(token_object)
         return token_object_list
 
     def userToDB(self, user):
@@ -115,6 +116,9 @@ class DBQueries:
 
         except Exception as e:
             print(e)
+
+    def getTopTokens(self):
+        pass
 
     def checkUserReviewed(self, screen_name):
         """Check whether the user has been marked as reviewed in the database.

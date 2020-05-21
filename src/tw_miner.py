@@ -26,6 +26,8 @@ class TwitterMiner:
 
         # API request. List of users followed by the main account.
         self.friendsList = self.api.friends_ids(screen_name=self.username)
+        # API request. List of main account's followers.
+        self.followersList = self.api.followers_ids(screen_name=self.username)
 
         # DB Connection
         self.db_queries = DBQueries()
@@ -65,7 +67,7 @@ class TwitterMiner:
         logging.info(f'since_id = {since_id}')
         print(f'since_id = {since_id}')
         return tweepy.Cursor(self.api.user_timeline,
-                             id=username,
+                             screen_name=username,
                              tweet_mode='extended',
                              since_id=since_id,
                              include_rts=include_rts,
@@ -94,10 +96,12 @@ class TwitterMiner:
         self.friendsList = self.api.friends_ids(screen_name=self.username)
         return self.friendsList
 
+    def updateFollowersList(self):
+        self.followersList = self.api.followers_ids(screen_name=self.username)
+        return self.followersList
+
     def searchCursor(self, query, result_type='recent', limit=200):
-
         count = self.countHandler(limit)
-
         return tweepy.Cursor(self.api.search,
                              q=query,
                              result_type=result_type,
@@ -105,4 +109,5 @@ class TwitterMiner:
 
 
 if __name__ == "__main__":
-    pass
+    m = TwitterMiner()
+    print(len(m.friendsList))

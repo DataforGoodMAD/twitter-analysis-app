@@ -63,10 +63,6 @@ class TwitterProcessor:
 
         return token_list
 
-    def getTweetHashtags(self, tweet_text):
-        tokens = self.tweetTokenizer(tweet_text)
-        return re.findall(r'#\w+', tokens)
-
     @property
     def counter(self):
         return self.__counter
