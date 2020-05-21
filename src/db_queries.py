@@ -15,7 +15,7 @@ load_dotenv()
 class DBQueries:
     def __init__(self):
 
-        self.username = os.getenv('username')
+        self.username = os.getenv('USERNAME')
 
         # Connection to Database
         self.engine = create_engine('sqlite:///./twitterdb.db', echo=False)

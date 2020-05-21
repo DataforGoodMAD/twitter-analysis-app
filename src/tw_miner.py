@@ -14,7 +14,7 @@ class TwitterMiner:
     def __init__(self):
 
         # Main User
-        self.username = os.getenv('username')
+        self.username = os.getenv('USERNAME')
 
         # Connection to Twitter API
         self.consumer_key = os.environ.get('CONSUMER_KEY')
