@@ -1,7 +1,7 @@
 import logging
 
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy.dialects.sqlite import DATETIME, BOOLEAN, INTEGER, VARCHAR
+from sqlalchemy.dialects.sqlite import DATETIME, BOOLEAN, INTEGER, VARCHAR, FLOAT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
@@ -54,6 +54,7 @@ class User(Base):
     is_friend = Column(BOOLEAN, nullable=True)
     last_status = Column(DATETIME, nullable=True)
     reviewed = Column(BOOLEAN)
+    similarity_score = Column(FLOAT, nullable=True)
 
 
 class Tweet(Base):
@@ -68,6 +69,7 @@ class Tweet(Base):
     display_text_range = Column(VARCHAR(100))
     retweet_count = Column(INTEGER)
     favorite_count = Column(INTEGER)
+    similarity = Column(FLOAT)
 
     user = relationship("User", back_populates="tweets")
 

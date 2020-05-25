@@ -53,6 +53,7 @@ class DBQueries:
             if status.author.screen_name == self.username:
                 tweet_object = AccountTimeline(**params)
             else:
+                params['similarity'] = status.similarity
                 tweet_object = Tweet(**params)
 
             return tweet_object
@@ -108,7 +109,8 @@ class DBQueries:
                 'is_follower': user.is_follower,
                 'is_friend': user.is_friend,
                 'last_status': (user.status.created_at if hasattr(user, 'status') else None),
-                'reviewed': 0
+                'reviewed': 0,
+                'similarity': (user.similarity if hasattr(user, 'similarity') else None)
             }
 
             user_object = User(**params)
@@ -117,8 +119,11 @@ class DBQueries:
         except Exception as e:
             print(e)
 
-    def getTopTokens(self):
-        pass
+    def getFollowersNotReviewed(self):
+        return self.session.query(User).filter(User.reviewed == False)
+
+    def getUserTweets(self, limit=50, order_by=AccountTimeline.created_at.desc()):
+        return self.q.session.query(AccountTimeline.full_text).order_by().limit(limit).all()
 
     def checkUserReviewed(self, screen_name):
         """Check whether the user has been marked as reviewed in the database.
@@ -136,4 +141,5 @@ class DBQueries:
 
 
 if __name__ == "__main__":
-    pass
+    q = DBQueries()
+    print()

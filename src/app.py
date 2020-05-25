@@ -1,12 +1,12 @@
-import os
 import logging
+import os
+from datetime import datetime, timedelta
+
 from dotenv import load_dotenv
 
+from db_queries import DBQueries
 from tw_miner import TwitterMiner
 from tw_processor import TwitterProcessor
-from db_queries import DBQueries
-
-from itertools import takewhile
 
 load_dotenv()
 
@@ -70,7 +70,33 @@ def updateFollowers(queries, miner, target_user):
 
 
 def secondGradeSearch(miner, processor, queries):
-    pass
+    users = queries.getFollowersNotReviewed()
+    for user in users[0:3]:
+        cursor = miner.followersCursor(
+            screen_name=user.screen_name, limit=20)
+        for user in cursor:
+            # Check if user is active:
+            if (datetime.now() - user.status.created_at) < timedelta(days=14) and user.statuses_count > 50 and user.default_profile_image == False:
+                tweets = miner.api.user_timeline(
+                    screen_name=user.screen_name, tweet_mode='extended', count=50)
+            for tweet in tweets:
+                if tweet.display_text_range != [0, 0]:
+                    tweet_tokenized = " ".join(
+                        processor.tweetTokenizer(tweet))
+                    spacy_doc = processor.nlp.make_doc(tweet_tokenized)
+                    tweet.similarity = round(mean([spacy_doc.similarity(
+                        user_tweet) for user_tweet in processor.userRefDocs]), 3)
+                else:
+                    tweet.similarity = float(0)
+            similar_tweets = [queries.tweetToDB(
+                tweet) for tweet in tweets if tweet.similarity > 0.7]
+            if len(similar_tweets) > 3:
+                queries.session.add_all(similar_tweets)
+                user.similarity = round(
+                    mean([tweet.similarity for tweet in tweets]), 3)
+                user_object = queries.userToDB(user)
+                queries.session.add(user_object)
+                queries.session.commit()
 
 
 if __name__ == "__main__":
