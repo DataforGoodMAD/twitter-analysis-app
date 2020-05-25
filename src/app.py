@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime, timedelta
+from statistics import mean
 
 from dotenv import load_dotenv
 
@@ -70,40 +71,52 @@ def updateFollowers(queries, miner, target_user):
 
 
 def secondGradeSearch(miner, processor, queries):
-    users = queries.getFollowersNotReviewed()
-    for user in users[0:3]:
+    followers = queries.getFollowersNotReviewed()
+    for follower in followers[0:3]:
         cursor = miner.followersCursor(
-            screen_name=user.screen_name, limit=20)
-        for user in cursor:
+            screen_name=follower.screen_name, limit=20)
+        while True:
+            try:
+                user = cursor.next()
+            except Exception as e:
+                logger.error(e)
+                break
             # Check if user is active:
             if (datetime.now() - user.status.created_at) < timedelta(days=14) and user.statuses_count > 50 and user.default_profile_image == False:
+                # Request the last 50 tweets
                 tweets = miner.api.user_timeline(
                     screen_name=user.screen_name, tweet_mode='extended', count=50)
-            for tweet in tweets:
-                if tweet.display_text_range != [0, 0]:
+                # Extract similarities
+                for tweet in tweets:
                     tweet_tokenized = " ".join(
-                        processor.tweetTokenizer(tweet))
+                        processor.tweetTokenizer(tweet.full_text))
                     spacy_doc = processor.nlp.make_doc(tweet_tokenized)
                     tweet.similarity = round(mean([spacy_doc.similarity(
                         user_tweet) for user_tweet in processor.userRefDocs]), 3)
-                else:
-                    tweet.similarity = float(0)
-            similar_tweets = [queries.tweetToDB(
-                tweet) for tweet in tweets if tweet.similarity > 0.7]
-            if len(similar_tweets) > 3:
-                queries.session.add_all(similar_tweets)
-                user.similarity = round(
-                    mean([tweet.similarity for tweet in tweets]), 3)
-                user_object = queries.userToDB(user)
-                queries.session.add(user_object)
-                queries.session.commit()
+                similar_tweets = [queries.tweetToDB(
+                    tweet) for tweet in tweets if tweet.similarity > 0.7]
+
+                if len(similar_tweets) > 3:
+                    queries.session.add_all(similar_tweets)
+                    user.similarity = round(
+                        mean([tweet.similarity for tweet in tweets]), 3)
+                    user_object = queries.userToDB(user)
+                    queries.session.add(user_object)
+                    queries.session.commit()
+        follower.reviewed = 1
+    queries.session.commit()
+    print()
 
 
 if __name__ == "__main__":
     processor = TwitterProcessor()
+    print("TwitterProcessor instance created")
     queries = DBQueries()
+    print("DBQueries instance created")
     miner = TwitterMiner()
+    print("TwitterMiner instance created")
 
     updateTimeline(processor, queries, miner)
     updateTokensCount(processor, queries)
     updateFollowers(queries, miner, miner.username)
+    secondGradeSearch(miner, processor, queries)

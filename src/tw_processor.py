@@ -1,15 +1,17 @@
-import re
 import logging
+import re
 import unicodedata
-from statistics import mean
 from collections import Counter
-import pandas as pd
+from statistics import mean
 
-import spacy
 import es_core_news_md  # spaCy pretrained model
-
 import nltk
+import pandas as pd
+import spacy
 from nltk.stem import WordNetLemmatizer
+
+from db_queries import DBQueries
+
 try:
     from nltk.corpus import stopwords
 except:
@@ -78,18 +80,18 @@ class TwitterProcessor:
         self.counter.update(token_list)
         return self.__counter
 
-    def tokensToText(self, tweet_text):
-        token_list = self.tweetTokenizer(tweet_text)
-        return " ".join(token_list)
-
-    def embeddingsExtract(self, batch_of_texts):
+    def toSpacyDocs(self, batch_of_tweets):
         with self.nlp.disable_pipes(self.nlp.pipe_names):
             docs = [doc for doc in self.nlp.pipe(
-                batch_of_texts) if doc.vector_norm]
+                [" ".join(self.tweetTokenizer(tweet.full_text)) for tweet in batch_of_tweets]) if doc.vector_norm]
         return docs
 
     @property
     def userRefDocs(self):
         user_tweets = self.db_queries.getUserTweets(limit=50)
-        tweets_text = [self.tokensToText(tweet[0] for tweet in user_tweets)
-        return self.embeddingsExtract(tweets_text)
+        return self.toSpacyDocs(user_tweets)
+
+
+if __name__ == "__main__":
+    p = TwitterProcessor()
+    p

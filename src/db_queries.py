@@ -110,7 +110,7 @@ class DBQueries:
                 'is_friend': user.is_friend,
                 'last_status': (user.status.created_at if hasattr(user, 'status') else None),
                 'reviewed': 0,
-                'similarity': (user.similarity if hasattr(user, 'similarity') else None)
+                'similarity_score': (user.similarity if hasattr(user, 'similarity') else None)
             }
 
             user_object = User(**params)
@@ -123,7 +123,7 @@ class DBQueries:
         return self.session.query(User).filter(User.reviewed == False)
 
     def getUserTweets(self, limit=50, order_by=AccountTimeline.created_at.desc()):
-        return self.q.session.query(AccountTimeline.full_text).order_by().limit(limit).all()
+        return self.session.query(AccountTimeline.full_text).order_by().limit(limit).all()
 
     def checkUserReviewed(self, screen_name):
         """Check whether the user has been marked as reviewed in the database.
@@ -134,7 +134,7 @@ class DBQueries:
         Returns:
             [bool] -- [True if has been already reviewed]
         """
-        return self.session.query(User.screen_name).filter(User.reviewed == True)
+        return self.session.query(User.reviewed).filter(User.screen_name == screen_name).first()[0]
 
     def listUsers(self):
         return self.session.query(User.user_id, User.screen_name).all()
@@ -142,4 +142,5 @@ class DBQueries:
 
 if __name__ == "__main__":
     q = DBQueries()
-    print()
+    x = q.checkUserReviewed('EDHuelva')
+    print(x)
