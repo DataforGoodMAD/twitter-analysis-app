@@ -15,7 +15,7 @@ load_dotenv()
 class DBQueries:
     def __init__(self):
 
-        self.username = os.getenv('USERNAME')
+        self.username = os.getenv('USER_SCREEN_NAME')
 
         # Connection to Database
         self.engine = create_engine('sqlite:///./twitterdb.db', echo=False)
@@ -53,7 +53,8 @@ class DBQueries:
             if status.author.screen_name == self.username:
                 tweet_object = AccountTimeline(**params)
             else:
-                params['similarity'] = status.similarity
+                params['similarity_score'] = (
+                    status.similarity if hasattr(status, 'similarity') else None)
                 tweet_object = Tweet(**params)
 
             return tweet_object
@@ -104,7 +105,6 @@ class DBQueries:
                 'created_at': user.created_at,
                 'favourites_count': user.favourites_count,
                 'statuses_count': user.statuses_count,
-                'lang': user.lang,
                 'default_profile_image': user.default_profile_image,
                 'is_follower': user.is_follower,
                 'is_friend': user.is_friend,
@@ -119,11 +119,21 @@ class DBQueries:
         except Exception as e:
             print(e)
 
-    def getFollowersNotReviewed(self):
-        return self.session.query(User).filter(User.reviewed == False)
+    def getFollowers(self, only_not_reviewed=False, only_followers=False, only_friends=False):
+        query = "self.session.query(User)"
+        if only_not_reviewed:
+            query += ".filter(User.reviewed == False)"
+        if only_followers:
+            query += ".filter(User.is_follower == True)"
+        if only_friends:
+            query += ".filter(User.is_friend == True)"
+        query += ".all()"
+        return eval(query)
 
-    def getUserTweets(self, limit=50, order_by=AccountTimeline.created_at.desc()):
-        return self.session.query(AccountTimeline.full_text).order_by().limit(limit).all()
+    def getUserTweets(self, limit=50, order_by=AccountTimeline.created_at.desc(), with_text=True):
+        if with_text:
+            return self.session.query(AccountTimeline.full_text).filter(AccountTimeline.display_text_range != '[0,0]').order_by(order_by).limit(limit).all()
+        return self.session.query(AccountTimeline.full_text).order_by(order_by).limit(limit).all()
 
     def checkUserReviewed(self, screen_name):
         """Check whether the user has been marked as reviewed in the database.
@@ -142,5 +152,9 @@ class DBQueries:
 
 if __name__ == "__main__":
     q = DBQueries()
-    x = q.checkUserReviewed('EDHuelva')
-    print(x)
+    x = q.session.query(User).filter(
+        User.similarity_score >= 0.7).limit(10).all()
+    print([i.screen_name for i in x])
+    y = x = q.session.query(User).filter(
+        User.similarity_score <= 0.7).limit(10).all()
+    print([i.screen_name for i in y])

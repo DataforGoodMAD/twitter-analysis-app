@@ -80,6 +80,14 @@ class TwitterProcessor:
         self.counter.update(token_list)
         return self.__counter
 
+    def similarityCompare(self, tweet):
+        tweet_tokenized = " ".join(self.tweetTokenizer(tweet.full_text))
+        spacy_doc = self.nlp.make_doc(tweet_tokenized)
+
+        similarity = round(mean([spacy_doc.similarity(
+            user_tweet) for user_tweet in self.userRefDocs]), 3)
+        return similarity
+
     def toSpacyDocs(self, batch_of_tweets):
         with self.nlp.disable_pipes(self.nlp.pipe_names):
             docs = [doc for doc in self.nlp.pipe(

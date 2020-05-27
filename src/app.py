@@ -71,7 +71,8 @@ def updateFollowers(queries, miner, target_user):
 
 
 def secondGradeSearch(miner, processor, queries):
-    followers = queries.getFollowersNotReviewed()
+    all_users = queries.getFollowers()
+    followers = queries.getFollowers(only_not_reviewed=True)
     for follower in followers[0:3]:
         cursor = miner.followersCursor(
             screen_name=follower.screen_name, limit=20)
@@ -82,30 +83,42 @@ def secondGradeSearch(miner, processor, queries):
                 logger.error(e)
                 break
             # Check if user is active:
-            if (datetime.now() - user.status.created_at) < timedelta(days=14) and user.statuses_count > 50 and user.default_profile_image == False:
+            if hasattr(user, 'status') and (datetime.now() - user.status.created_at) < timedelta(days=14) and user.statuses_count > 50 and user.default_profile_image == False:
                 # Request the last 50 tweets
                 tweets = miner.api.user_timeline(
                     screen_name=user.screen_name, tweet_mode='extended', count=50)
                 # Extract similarities
                 for tweet in tweets:
-                    tweet_tokenized = " ".join(
-                        processor.tweetTokenizer(tweet.full_text))
-                    spacy_doc = processor.nlp.make_doc(tweet_tokenized)
-                    tweet.similarity = round(mean([spacy_doc.similarity(
-                        user_tweet) for user_tweet in processor.userRefDocs]), 3)
+                    tweet.similarity = processor.similarityCompare(tweet)
                 similar_tweets = [queries.tweetToDB(
                     tweet) for tweet in tweets if tweet.similarity > 0.7]
 
                 if len(similar_tweets) > 3:
+                    # Check whether the user is already in our database, and if so, update it:
+                    existent_user = [
+                        u for u in all_users if u.user_id == user.id]
+                    if existent_user:
+                        user = existent_user[0]
+                        user.is_friend = 1 if user.user_id in miner.friendsList else 0
+                        user.is_follower = 1 if user.user_id in miner.followersList else 0
+                        user.similarity = round(
+                            mean([tweet.similarity for tweet in tweets]), 3)
+
+                    else:
+                        # User for Database
+                        user.is_friend = 1 if user.id in miner.friendsList else 0
+                        user.is_follower = 1 if user.id in miner.followersList else 0
+                        user.similarity = round(
+                            mean([tweet.similarity for tweet in tweets]), 3)
+                        user_object = queries.userToDB(user)
+                        queries.session.add(user_object)
+                    # Tweets for Database
                     queries.session.add_all(similar_tweets)
-                    user.similarity = round(
-                        mean([tweet.similarity for tweet in tweets]), 3)
                     user_object = queries.userToDB(user)
-                    queries.session.add(user_object)
                     queries.session.commit()
         follower.reviewed = 1
     queries.session.commit()
-    print()
+    print('Second Grade Search: Done')
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ class TwitterMiner:
     def __init__(self):
 
         # Main User
-        self.username = os.getenv('USERNAME')
+        self.username = os.getenv('USER_SCREEN_NAME')
 
         # Connection to Twitter API
         self.consumer_key = os.environ.get('CONSUMER_KEY')
@@ -110,4 +110,4 @@ class TwitterMiner:
 
 if __name__ == "__main__":
     m = TwitterMiner()
-    print(len(m.friendsList))
+    print(m.username)

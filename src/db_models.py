@@ -48,13 +48,13 @@ class User(Base):
     created_at = Column(DATETIME)
     favourites_count = Column(INTEGER)
     statuses_count = Column(INTEGER)
-    lang = Column(VARCHAR(100))
     default_profile_image = Column(BOOLEAN)
     is_follower = Column(BOOLEAN, nullable=True)
     is_friend = Column(BOOLEAN, nullable=True)
     last_status = Column(DATETIME, nullable=True)
     reviewed = Column(BOOLEAN)
     similarity_score = Column(FLOAT, nullable=True)
+    tweets = relationship("Tweet", back_populates="user")
 
 
 class Tweet(Base):
@@ -62,7 +62,7 @@ class Tweet(Base):
     __tablename__ = 'tweets'
 
     tweet_id = Column(INTEGER, primary_key=True)
-    user_id = Column(INTEGER)
+    user_id = Column(INTEGER, ForeignKey('users.user_id'))
     created_at = Column(DATETIME)
     full_text = Column(VARCHAR(300))
     hashtags = Column(VARCHAR(300))
@@ -70,13 +70,8 @@ class Tweet(Base):
     display_text_range = Column(VARCHAR(100))
     retweet_count = Column(INTEGER)
     favorite_count = Column(INTEGER)
-
+    similarity_score = Column(FLOAT, nullable=True)
     user = relationship("User", back_populates="tweets")
-
-
-# TODO: Revisar relaciones. Chequear si el orden de creación de usuario y tweets está generando el error.
-User.tweets = relationship(
-    'Tweet', order_by=Tweet.tweet_id, back_populates="user")
 
 
 if __name__ == "__main__":

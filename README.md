@@ -9,7 +9,7 @@ Setup instructions:
     pip install -r requirements.txt
     ```
 
-4. Within the main folder of the project, create a file named *.env* and add to it the variables CONSUMER_KEY and CONSUMER_SECRET_KEY (those are your Twitter API Keys), and USERNAME (this is the screen name of the main user account). 
+4. Within the main folder of the project, create a file named *.env* and add to it the variables CONSUMER_KEY and CONSUMER_SECRET_KEY (those are your Twitter API Keys), and USER_SCREEN_NAME (this is the screen name of the main user account). 
 
 5. Run the db_models.py to create the database:
     ```
