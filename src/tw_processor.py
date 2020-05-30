@@ -10,8 +10,6 @@ import pandas as pd
 import spacy
 from nltk.stem import WordNetLemmatizer
 
-from db_queries import DBQueries
-
 try:
     from nltk.corpus import stopwords
 except:
@@ -32,10 +30,8 @@ class TwitterProcessor:
         self.punctuation = '¡!"$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
         self.stopWords = set(stopwords.words(
             'spanish') + stopwords.words('english'))
+        print("loading spaCy model: es_core_news_md")
         self.nlp = es_core_news_md.load()
-
-        # DB Connection
-        self.db_queries = DBQueries()
 
     def __repr__(self):
         return(f"""
@@ -80,10 +76,8 @@ class TwitterProcessor:
         self.counter.update(token_list)
         return self.__counter
 
-    def similarityCompare(self, tweet):
-        tweet_tokenized = " ".join(self.tweetTokenizer(tweet.full_text))
-        spacy_doc = self.nlp.make_doc(tweet_tokenized)
-
+    # TODO: A pesar de la tokenización, siguen saliendo warnings de similarity with vectors 0.
+    def similarityCompare(self, spacy_doc):
         similarity = round(mean([spacy_doc.similarity(
             user_tweet) for user_tweet in self.userRefDocs]), 3)
         return similarity
@@ -93,11 +87,6 @@ class TwitterProcessor:
             docs = [doc for doc in self.nlp.pipe(
                 [" ".join(self.tweetTokenizer(tweet.full_text)) for tweet in batch_of_tweets]) if doc.vector_norm]
         return docs
-
-    @property
-    def userRefDocs(self):
-        user_tweets = self.db_queries.getUserTweets(limit=50)
-        return self.toSpacyDocs(user_tweets)
 
 
 if __name__ == "__main__":

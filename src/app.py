@@ -72,24 +72,30 @@ def updateFollowers(queries, miner, target_user):
 
 def secondGradeSearch(miner, processor, queries):
     all_users = queries.getFollowers()
-    followers = queries.getFollowers(only_not_reviewed=True)
-    for follower in followers[0:3]:
+    not_reviewed_users = queries.getFollowers(only_not_reviewed=True)
+    ref_docs = processor.toSpacyDocs(
+        queries.getUserTweets(limit=50))  # Main Account Docs
+    for follower in not_reviewed_users[0:3]:
         cursor = miner.followersCursor(
             screen_name=follower.screen_name, limit=20)
         while True:
             try:
-                user = cursor.next()
-            except Exception as e:
-                logger.error(e)
+                user = next(cursor)
+            except StopIteration:
                 break
             # Check if user is active:
             if hasattr(user, 'status') and (datetime.now() - user.status.created_at) < timedelta(days=14) and user.statuses_count > 50 and user.default_profile_image == False:
                 # Request the last 50 tweets
                 tweets = miner.api.user_timeline(
                     screen_name=user.screen_name, tweet_mode='extended', count=50)
-                # Extract similarities
+                # Compare similarity of each tweet with the main account ref_docs:
                 for tweet in tweets:
-                    tweet.similarity = processor.similarityCompare(tweet)
+                    tweet_tokenized = " ".join(
+                        processor.tweetTokenizer(tweet.full_text))
+                    spacy_doc = processor.nlp.make_doc(tweet_tokenized)
+                    tweet.similarity = round(mean([spacy_doc.similarity(
+                        user_tweet) for user_tweet in ref_docs]), 3)
+                # TODO: Chequear si el tweet está en la base de datos antes de intentar guardarlo
                 similar_tweets = [queries.tweetToDB(
                     tweet) for tweet in tweets if tweet.similarity > 0.7]
 
@@ -132,4 +138,4 @@ if __name__ == "__main__":
     updateTimeline(processor, queries, miner)
     updateTokensCount(processor, queries)
     updateFollowers(queries, miner, miner.username)
-    secondGradeSearch(miner, processor, queries)
+    #secondGradeSearch(miner, processor, queries)
