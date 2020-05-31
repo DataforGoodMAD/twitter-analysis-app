@@ -52,7 +52,7 @@ def updateTokensCount(processor, queries):
 def updateFollowers(queries, miner, target_user):
 
     stored_users = queries.listUsers()
-    cursor = miner.followersCursor(screen_name=target_user, limit=200)
+    cursor = miner.followersCursor(screen_name=target_user, limit=0)
 
     user_objects_list = []
     for user in cursor:
