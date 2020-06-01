@@ -1,16 +1,22 @@
 import logging
 import os
+import sys
+import warnings
 from statistics import mean
 
+import tweepy
 from dotenv import load_dotenv
 
 from db_queries import DBQueries
 from tw_miner import TwitterMiner
 from tw_processor import TwitterProcessor
-import tweepy
-
 
 load_dotenv()
+
+# Disable warnings for production. Change PYTHONWARNINGS to 'default' to debug.
+python_warnings = os.getenv('PYTHONWARNINGS')
+warnings.simplefilter(python_warnings)
+
 
 logger = logging.getLogger('log')
 
@@ -84,6 +90,7 @@ def secondGradeSearch(miner, processor, queries):
             except StopIteration:
                 break
 
+            # Check the user on the database, and looks for is_follower is_friend and similarity_score.
             user_db = queries.checkSecondGradeUser(user.id)
             if user_db:
                 user = user_db
@@ -93,36 +100,22 @@ def secondGradeSearch(miner, processor, queries):
                 tweets = miner.api.user_timeline(
                     screen_name=user.screen_name, tweet_mode='extended', count=50)
 
-                similar_tweets = processor.similarityPipe(tweets)
+                similar_tweets = processor.similarityPipe(tweets, ref_docs)
                 user.similarity = round(
                     mean([tweet.similarity for tweet in tweets]), 3)
+                # Check if user is a database object or must be created new.
+                if isinstance(user, tweepy.models.User):
+                    user_object = queries.userToDB(user)
+                    queries.session.add(user_object)
+
                 similar_tweets = [queries.tweetToDB(
-                    tweet) for tweet in similar_tweets]
+                    tweet) for tweet in similar_tweets if not queries.checkTweetExist(tweet)]
 
-            if isinstance(user, tweepy.models.User):
-                pass
+                queries.session.add_all(similar_tweets)
 
-                #   existent_user = [
-                #        u for u in all_users if u.id == user.id]
-                #    if existent_user:
-                #         user = existent_user[0]
-                #         user.is_friend = 1 if user.id in miner.friendsList else 0
-                #         user.is_follower = 1 if user.id in miner.followersList else 0
-                #         user.similarity = round(
-                #             mean([tweet.similarity for tweet in tweets]), 3)
+            # Commit Changes to database.
+            queries.session.commit()
 
-                #     else:
-                #         # User for Database
-                #         user.is_friend = 1 if user.id in miner.friendsList else 0
-                #         user.is_follower = 1 if user.id in miner.followersList else 0
-                #         user.similarity = round(
-                #             mean([tweet.similarity for tweet in tweets]), 3)
-                #         user_object = queries.userToDB(user)
-                #         queries.session.add(user_object)
-                #     # Tweets for Database
-                #     queries.session.add_all(similar_tweets)
-                #     user_object = queries.userToDB(user)
-                #     queries.session.commit()
         follower.reviewed = 1
     queries.session.commit()
     print('Second Grade Search: Done')
@@ -136,9 +129,9 @@ def main():
     miner = TwitterMiner()
     print("TwitterMiner instance created")
 
-    # updateTimeline(processor, queries, miner)
-    # updateTokensCount(processor, queries)
-    # updateFollowers(queries, miner, miner.username)
+    updateTimeline(processor, queries, miner)
+    updateTokensCount(processor, queries)
+    updateFollowers(queries, miner, miner.username)
     secondGradeSearch(miner, processor, queries)
 
 

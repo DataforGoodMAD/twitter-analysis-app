@@ -89,15 +89,15 @@ class TwitterProcessor:
                 [" ".join(self.tweetTokenizer(tweet.full_text)) for tweet in batch_of_tweets]) if doc.vector_norm]
         return docs
 
-    def similarityPipe(self, tweets_list, ref_docs):
-        for tweet in tweets_list:
+    def similarityPipe(self, tweet_list, ref_docs):
+        for tweet in tweet_list:
             if tweet.display_text_range != '[0,0]':
                 tweet_tokenized = " ".join(
                     self.tweetTokenizer(tweet.full_text))
                 spacy_doc = self.nlp.make_doc(tweet_tokenized)
                 tweet.similarity = round(mean([spacy_doc.similarity(
                     user_tweet) for user_tweet in ref_docs]), 3)
-        return [tweet for tweet in tweets if tweet.similarity > 0.7]
+        return [tweet for tweet in tweet_list if tweet.similarity > 0.7]
 
     def isActive(self, user):
         if hasattr(user, 'status') and (datetime.now() - user.status.created_at) < timedelta(days=14) and user.statuses_count > 50 and user.default_profile_image == False:
