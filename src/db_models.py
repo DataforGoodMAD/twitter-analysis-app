@@ -39,7 +39,7 @@ class User(Base):
 
     __tablename__ = 'users'
 
-    user_id = Column(INTEGER, primary_key=True)
+    id = Column(INTEGER, primary_key=True)
     screen_name = Column(VARCHAR(200))
     location = Column(VARCHAR(200))
     protected = Column(BOOLEAN)
@@ -62,7 +62,7 @@ class Tweet(Base):
     __tablename__ = 'tweets'
 
     tweet_id = Column(INTEGER, primary_key=True)
-    user_id = Column(INTEGER, ForeignKey('users.user_id'))
+    user_id = Column(INTEGER, ForeignKey('users.id'))
     created_at = Column(DATETIME)
     full_text = Column(VARCHAR(300))
     hashtags = Column(VARCHAR(300))

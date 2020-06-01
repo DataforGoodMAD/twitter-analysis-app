@@ -3,6 +3,7 @@ import re
 import unicodedata
 from collections import Counter
 from statistics import mean
+from datetime import datetime, timedelta
 
 import es_core_news_md  # spaCy pretrained model
 import nltk
@@ -76,17 +77,32 @@ class TwitterProcessor:
         self.counter.update(token_list)
         return self.__counter
 
-    # TODO: A pesar de la tokenización, siguen saliendo warnings de similarity with vectors 0.
-    def similarityCompare(self, spacy_doc):
-        similarity = round(mean([spacy_doc.similarity(
-            user_tweet) for user_tweet in self.userRefDocs]), 3)
-        return similarity
+    # DEPRECADO:
+    # def similarityCompare(self, spacy_doc, ref_docs):
+    #     similarity = round(mean([spacy_doc.similarity(
+    #         user_tweet) for user_tweet in ref_docs]), 3)
+    #     return similarity
 
     def toSpacyDocs(self, batch_of_tweets):
         with self.nlp.disable_pipes(self.nlp.pipe_names):
             docs = [doc for doc in self.nlp.pipe(
                 [" ".join(self.tweetTokenizer(tweet.full_text)) for tweet in batch_of_tweets]) if doc.vector_norm]
         return docs
+
+    def similarityPipe(self, tweets_list, ref_docs):
+        for tweet in tweets_list:
+            if tweet.display_text_range != '[0,0]':
+                tweet_tokenized = " ".join(
+                    self.tweetTokenizer(tweet.full_text))
+                spacy_doc = self.nlp.make_doc(tweet_tokenized)
+                tweet.similarity = round(mean([spacy_doc.similarity(
+                    user_tweet) for user_tweet in ref_docs]), 3)
+        return [tweet for tweet in tweets if tweet.similarity > 0.7]
+
+    def isActive(self, user):
+        if hasattr(user, 'status') and (datetime.now() - user.status.created_at) < timedelta(days=14) and user.statuses_count > 50 and user.default_profile_image == False:
+            return True
+        return False
 
 
 if __name__ == "__main__":

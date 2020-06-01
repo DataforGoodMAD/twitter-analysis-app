@@ -96,7 +96,7 @@ class DBQueries:
 
         try:
             params = {
-                'user_id': user.id,
+                'id': user.id,
                 'screen_name': user.screen_name,
                 'location': user.location,
                 'protected': user.protected,
@@ -147,14 +147,21 @@ class DBQueries:
         return self.session.query(User.reviewed).filter(User.screen_name == screen_name).first()[0]
 
     def listUsers(self):
-        return self.session.query(User.user_id, User.screen_name).all()
+        return self.session.query(User.id, User.screen_name).all()
+
+    def checkSecondGradeUser(self, id):
+        return self.session.query(User).filter_by(
+            id=id, is_follower=0, is_friend=0, similarity_score=None).first()
 
 
 if __name__ == "__main__":
     q = DBQueries()
-    x = q.session.query(User).filter(
-        User.similarity_score >= 0.7).limit(10).all()
-    print([i.screen_name for i in x])
-    y = x = q.session.query(User).filter(
-        User.similarity_score <= 0.7).limit(10).all()
-    print([i.screen_name for i in y])
+    ob = q.session.query(User).first()
+    print(isinstance(ob, User))
+
+    # x = q.session.query(User).filter(
+    #     User.similarity_score >= 0.7).limit(10).all()
+    # print([i.screen_name for i in x])
+    # y = x = q.session.query(User).filter(
+    #     User.similarity_score <= 0.7).limit(10).all()
+    # print([i.screen_name for i in y])
