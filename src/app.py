@@ -1,8 +1,10 @@
 import logging
 import os
-from datetime import datetime, timedelta
+import sys
+import warnings
 from statistics import mean
 
+import tweepy
 from dotenv import load_dotenv
 
 from db_queries import DBQueries
@@ -10,6 +12,11 @@ from tw_miner import TwitterMiner
 from tw_processor import TwitterProcessor
 
 load_dotenv()
+
+# Disable warnings for production. Change PYTHONWARNINGS to 'default' to debug.
+python_warnings = os.getenv('PYTHONWARNINGS')
+warnings.simplefilter(python_warnings)
+
 
 logger = logging.getLogger('log')
 
@@ -71,71 +78,81 @@ def updateFollowers(queries, miner, target_user):
 
 
 def secondGradeSearch(miner, processor, queries):
-    all_users = queries.getFollowers()
-    not_reviewed_users = queries.getFollowers(only_not_reviewed=True)
+    not_reviewed_users = queries.getFollowers(
+        only_not_reviewed=True, only_followers=True)
     ref_docs = processor.toSpacyDocs(
         queries.getUserTweets(limit=50))  # Main Account Docs
-    for follower in not_reviewed_users[0:3]:
+    for follower in not_reviewed_users:
         cursor = miner.followersCursor(
-            screen_name=follower.screen_name, limit=20)
+            screen_name=follower.screen_name, limit=0)
+
         while True:
             try:
-                user = next(cursor)
-            except StopIteration:
-                break
-            # Check if user is active:
-            if hasattr(user, 'status') and (datetime.now() - user.status.created_at) < timedelta(days=14) and user.statuses_count > 50 and user.default_profile_image == False:
-                # Request the last 50 tweets
-                tweets = miner.api.user_timeline(
-                    screen_name=user.screen_name, tweet_mode='extended', count=50)
-                # Compare similarity of each tweet with the main account ref_docs:
-                for tweet in tweets:
-                    tweet_tokenized = " ".join(
-                        processor.tweetTokenizer(tweet.full_text))
-                    spacy_doc = processor.nlp.make_doc(tweet_tokenized)
-                    tweet.similarity = round(mean([spacy_doc.similarity(
-                        user_tweet) for user_tweet in ref_docs]), 3)
-                # TODO: Chequear si el tweet está en la base de datos antes de intentar guardarlo
-                similar_tweets = [queries.tweetToDB(
-                    tweet) for tweet in tweets if tweet.similarity > 0.7]
-
-                if len(similar_tweets) > 3:
-                    # Check whether the user is already in our database, and if so, update it:
-                    existent_user = [
-                        u for u in all_users if u.user_id == user.id]
-                    if existent_user:
-                        user = existent_user[0]
-                        user.is_friend = 1 if user.user_id in miner.friendsList else 0
-                        user.is_follower = 1 if user.user_id in miner.followersList else 0
-                        user.similarity = round(
-                            mean([tweet.similarity for tweet in tweets]), 3)
-
-                    else:
-                        # User for Database
-                        user.is_friend = 1 if user.id in miner.friendsList else 0
-                        user.is_follower = 1 if user.id in miner.followersList else 0
-                        user.similarity = round(
-                            mean([tweet.similarity for tweet in tweets]), 3)
+                user = cursor.next()
+                # Check the user on the database, and looks for is_follower is_friend and similarity_score.
+                user_db = queries.checkSecondGradeUser(user.id)
+                if user_db is False:
+                    continue
+                elif user_db:
+                    user = user_db
+                ff = miner.updateFriendFollower(user)
+                if ff == (0, 0) and processor.isActive(user):
+                    # Request the last 50 tweets
+                    tweets = miner.api.user_timeline(
+                        screen_name=user.screen_name, tweet_mode='extended', count=50)
+                    similar_tweets = processor.similarityPipe(
+                        tweets, ref_docs)
+                    user.similarity = round(
+                        mean([tweet.similarity for tweet in tweets]), 3)
+                    # Check if user is a database object or must be created new.
+                    if isinstance(user, tweepy.models.User):
                         user_object = queries.userToDB(user)
                         queries.session.add(user_object)
-                    # Tweets for Database
+                        print(
+                            f"User {user.screen_name} saved to database with similarity score {user.similarity}")
+
+                    similar_tweets = [queries.tweetToDB(
+                        tweet) for tweet in similar_tweets if not queries.checkTweetExist(tweet)]
+
                     queries.session.add_all(similar_tweets)
-                    user_object = queries.userToDB(user)
-                    queries.session.commit()
+
+                # Commit Changes to database.
+                queries.session.commit()
+
+            except StopIteration:
+                break
+
+            except tweepy.RateLimitError:
+                queries.session.commit()
+                print('Reached requests limit. Please wait 15 minutes to try again.')
+                return 0
+
         follower.reviewed = 1
+        print(f'Follower {follower.screen_name} reviewed.')
     queries.session.commit()
     print('Second Grade Search: Done')
 
 
-if __name__ == "__main__":
-    processor = TwitterProcessor()
-    print("TwitterProcessor instance created")
-    queries = DBQueries()
-    print("DBQueries instance created")
-    miner = TwitterMiner()
-    print("TwitterMiner instance created")
+def main():
+    try:
 
-    updateTimeline(processor, queries, miner)
-    updateTokensCount(processor, queries)
-    updateFollowers(queries, miner, miner.username)
-    #secondGradeSearch(miner, processor, queries)
+        processor = TwitterProcessor()
+        print("TwitterProcessor instance created")
+        queries = DBQueries()
+        print("DBQueries instance created")
+        miner = TwitterMiner()
+        print("TwitterMiner instance created")
+
+        updateTimeline(processor, queries, miner)
+        updateTokensCount(processor, queries)
+        updateFollowers(queries, miner, miner.username)
+        #secondGradeSearch(miner, processor, queries)
+
+    except tweepy.RateLimitError:
+        queries.session.commit()
+        print('Reached requests limit. Please wait 15 minutes to try again.')
+        return 0
+
+
+if __name__ == "__main__":
+    main()

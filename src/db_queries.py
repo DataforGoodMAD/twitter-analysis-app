@@ -19,8 +19,8 @@ class DBQueries:
 
         # Connection to Database
         self.engine = create_engine('sqlite:///./twitterdb.db', echo=False)
-        self.Session = sessionmaker(bind=self.engine)
-        self.session = self.Session()
+        self._Session = sessionmaker(bind=self.engine)
+        self.session = self._Session()
 
     def topTweetId(self):
         return self.session.query(
@@ -96,7 +96,7 @@ class DBQueries:
 
         try:
             params = {
-                'user_id': user.id,
+                'id': user.id,
                 'screen_name': user.screen_name,
                 'location': user.location,
                 'protected': user.protected,
@@ -147,7 +147,18 @@ class DBQueries:
         return self.session.query(User.reviewed).filter(User.screen_name == screen_name).first()[0]
 
     def listUsers(self):
-        return self.session.query(User.user_id, User.screen_name).all()
+        return self.session.query(User.id, User.screen_name).all()
+
+    def checkSecondGradeUser(self, id):
+        user = self.session.query(User).first()
+        if user and user.is_follower == 0 and user.is_friend == 0 and user.similarity_score == None:
+            return user
+        elif user:
+            return False
+
+    def checkTweetExist(self, tweet):
+        q = self.session.query(Tweet).filter_by(tweet_id=tweet.id)
+        return self.session.query(q.exists()).scalar()
 
 
 if __name__ == "__main__":

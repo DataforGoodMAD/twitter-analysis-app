@@ -22,7 +22,7 @@ class TwitterMiner:
         self.auth = tweepy.AppAuthHandler(
             self.consumer_key, self.consumer_secret)
         self.api = tweepy.API(
-            self.auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+            self.auth)
 
         # API request. List of users followed by the main account.
         self.friendsList = self.api.friends_ids(screen_name=self.username)
@@ -107,7 +107,14 @@ class TwitterMiner:
                              result_type=result_type,
                              count=count).items(limit)
 
+    def updateFriendFollower(self, user):
+        user.is_friend = 1 if user.id in self.friendsList else 0
+        user.is_follower = 1 if user.id in self.followersList else 0
+        return (user.is_follower, user.is_friend)
+
 
 if __name__ == "__main__":
     m = TwitterMiner()
-    print(m.username)
+    m.username
+    print(m.api.user_timeline(
+        screen_name=m.username, tweet_mode='extended'))
