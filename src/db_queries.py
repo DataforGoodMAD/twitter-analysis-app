@@ -150,8 +150,11 @@ class DBQueries:
         return self.session.query(User.id, User.screen_name).all()
 
     def checkSecondGradeUser(self, id):
-        return self.session.query(User).filter_by(
-            id=id, is_follower=0, is_friend=0, similarity_score=None).first()
+        user = self.session.query(User).first()
+        if user and user.is_follower == 0 and user.is_friend == 0 and user.similarity_score == None:
+            return user
+        elif user:
+            return False
 
     def checkTweetExist(self, tweet):
         q = self.session.query(Tweet).filter_by(tweet_id=tweet.id)

@@ -78,61 +78,80 @@ def updateFollowers(queries, miner, target_user):
 
 
 def secondGradeSearch(miner, processor, queries):
-    not_reviewed_users = queries.getFollowers(only_not_reviewed=True)
+    not_reviewed_users = queries.getFollowers(
+        only_not_reviewed=True, only_followers=True)
     ref_docs = processor.toSpacyDocs(
         queries.getUserTweets(limit=50))  # Main Account Docs
-    for follower in not_reviewed_users[0:3]:
+    for follower in not_reviewed_users:
         cursor = miner.followersCursor(
-            screen_name=follower.screen_name, limit=20)
+            screen_name=follower.screen_name, limit=0)
+
         while True:
             try:
-                user = next(cursor)
+                user = cursor.next()
+                # Check the user on the database, and looks for is_follower is_friend and similarity_score.
+                user_db = queries.checkSecondGradeUser(user.id)
+                if user_db is False:
+                    continue
+                elif user_db:
+                    user = user_db
+                ff = miner.updateFriendFollower(user)
+                if ff == (0, 0) and processor.isActive(user):
+                    # Request the last 50 tweets
+                    tweets = miner.api.user_timeline(
+                        screen_name=user.screen_name, tweet_mode='extended', count=50)
+                    similar_tweets = processor.similarityPipe(
+                        tweets, ref_docs)
+                    user.similarity = round(
+                        mean([tweet.similarity for tweet in tweets]), 3)
+                    # Check if user is a database object or must be created new.
+                    if isinstance(user, tweepy.models.User):
+                        user_object = queries.userToDB(user)
+                        queries.session.add(user_object)
+                        print(
+                            f"User {user.screen_name} saved to database with similarity score {user.similarity}")
+
+                    similar_tweets = [queries.tweetToDB(
+                        tweet) for tweet in similar_tweets if not queries.checkTweetExist(tweet)]
+
+                    queries.session.add_all(similar_tweets)
+
+                # Commit Changes to database.
+                queries.session.commit()
+
             except StopIteration:
                 break
 
-            # Check the user on the database, and looks for is_follower is_friend and similarity_score.
-            user_db = queries.checkSecondGradeUser(user.id)
-            if user_db:
-                user = user_db
-            ff = miner.updateFriendFollower(user)
-            if ff == (0, 0) and processor.isActive(user):
-                # Request the last 50 tweets
-                tweets = miner.api.user_timeline(
-                    screen_name=user.screen_name, tweet_mode='extended', count=50)
-
-                similar_tweets = processor.similarityPipe(tweets, ref_docs)
-                user.similarity = round(
-                    mean([tweet.similarity for tweet in tweets]), 3)
-                # Check if user is a database object or must be created new.
-                if isinstance(user, tweepy.models.User):
-                    user_object = queries.userToDB(user)
-                    queries.session.add(user_object)
-
-                similar_tweets = [queries.tweetToDB(
-                    tweet) for tweet in similar_tweets if not queries.checkTweetExist(tweet)]
-
-                queries.session.add_all(similar_tweets)
-
-            # Commit Changes to database.
-            queries.session.commit()
+            except tweepy.RateLimitError:
+                queries.session.commit()
+                print('Reached requests limit. Please wait 15 minutes to try again.')
+                return 0
 
         follower.reviewed = 1
+        print(f'Follower {follower.screen_name} reviewed.')
     queries.session.commit()
     print('Second Grade Search: Done')
 
 
 def main():
-    processor = TwitterProcessor()
-    print("TwitterProcessor instance created")
-    queries = DBQueries()
-    print("DBQueries instance created")
-    miner = TwitterMiner()
-    print("TwitterMiner instance created")
+    try:
 
-    updateTimeline(processor, queries, miner)
-    updateTokensCount(processor, queries)
-    updateFollowers(queries, miner, miner.username)
-    secondGradeSearch(miner, processor, queries)
+        processor = TwitterProcessor()
+        print("TwitterProcessor instance created")
+        queries = DBQueries()
+        print("DBQueries instance created")
+        miner = TwitterMiner()
+        print("TwitterMiner instance created")
+
+        updateTimeline(processor, queries, miner)
+        updateTokensCount(processor, queries)
+        updateFollowers(queries, miner, miner.username)
+        secondGradeSearch(miner, processor, queries)
+
+    except tweepy.RateLimitError:
+        queries.session.commit()
+        print('Reached requests limit. Please wait 15 minutes to try again.')
+        return 0
 
 
 if __name__ == "__main__":
