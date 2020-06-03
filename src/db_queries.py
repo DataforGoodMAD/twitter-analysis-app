@@ -165,7 +165,6 @@ if __name__ == "__main__":
     q = DBQueries()
     x = q.session.query(User).filter(
         User.similarity_score >= 0.7).limit(10).all()
-    print([i.screen_name for i in x])
-    y = x = q.session.query(User).filter(
-        User.similarity_score <= 0.7).limit(10).all()
-    print([i.screen_name for i in y])
+    print(f'Similar users: {[i.screen_name for i in x]}')
+    y = q.getFollowers(only_followers=True, only_not_reviewed=True)
+    print(f'Not reviewed followers: {[e.screen_name for e in y]}')
