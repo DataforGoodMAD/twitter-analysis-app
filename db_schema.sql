@@ -19,21 +19,8 @@ CREATE TABLE tokens_count (
         PRIMARY KEY (id), 
         CHECK (is_hashtag IN (0, 1))
 );
-CREATE TABLE tweets (
-        tweet_id INTEGER NOT NULL, 
-        user_id INTEGER, 
-        created_at DATETIME, 
-        full_text VARCHAR(300), 
-        truncated BOOLEAN, 
-        display_text_range VARCHAR(100), 
-        retweet_count INTEGER, 
-        favorite_count INTEGER, 
-        PRIMARY KEY (tweet_id), 
-        FOREIGN KEY(user_id) REFERENCES users (user_id), 
-        CHECK (truncated IN (0, 1))
-);
 CREATE TABLE users (
-        user_id INTEGER NOT NULL, 
+        id INTEGER NOT NULL, 
         screen_name VARCHAR(200), 
         location VARCHAR(200), 
         protected BOOLEAN, 
@@ -42,16 +29,30 @@ CREATE TABLE users (
         created_at DATETIME, 
         favourites_count INTEGER, 
         statuses_count INTEGER, 
-        lang VARCHAR(100), 
         default_profile_image BOOLEAN, 
         is_follower BOOLEAN, 
         is_friend BOOLEAN, 
         last_status DATETIME, 
         reviewed BOOLEAN, 
-        PRIMARY KEY (user_id), 
+        similarity_score FLOAT, 
+        PRIMARY KEY (id), 
         CHECK (protected IN (0, 1)), 
         CHECK (default_profile_image IN (0, 1)), 
         CHECK (is_follower IN (0, 1)), 
         CHECK (is_friend IN (0, 1)), 
         CHECK (reviewed IN (0, 1))
+);
+CREATE TABLE tweets (
+        tweet_id INTEGER NOT NULL, 
+        user_id INTEGER, 
+        created_at DATETIME, 
+        full_text VARCHAR(300), 
+        hashtags VARCHAR(300), 
+        truncated INTEGER, 
+        display_text_range VARCHAR(100), 
+        retweet_count INTEGER, 
+        favorite_count INTEGER, 
+        similarity_score FLOAT, 
+        PRIMARY KEY (tweet_id), 
+        FOREIGN KEY(user_id) REFERENCES users (id)
 );

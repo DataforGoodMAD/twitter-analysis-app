@@ -147,7 +147,7 @@ def main():
         updateTimeline(processor, queries, miner)
         updateTokensCount(processor, queries)
         updateFollowers(queries, miner, miner.username)
-        #secondGradeSearch(miner, processor, queries)
+        secondGradeSearch(miner, processor, queries)
 
     except tweepy.RateLimitError:
         queries.session.commit()
