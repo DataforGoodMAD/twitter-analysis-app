@@ -123,6 +123,7 @@ def secondGradeSearch(miner, processor, queries):
                 break
 
             except tweepy.RateLimitError:
+                follower.reviewed = 1
                 queries.session.commit()
                 print('Reached requests limit. Please wait 15 minutes to try again.')
                 return 0
