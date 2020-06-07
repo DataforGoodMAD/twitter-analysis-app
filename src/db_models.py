@@ -11,7 +11,7 @@ Base = declarative_base()
 
 class AccountTimeline(Base):
 
-    __tablename__ = 'account_timeline'
+    __tablename__ = "account_timeline"
 
     tweet_id = Column(INTEGER, primary_key=True)
     user_id = Column(INTEGER)
@@ -26,7 +26,7 @@ class AccountTimeline(Base):
 
 class TokensCount(Base):
 
-    __tablename__ = 'tokens_count'
+    __tablename__ = "tokens_count"
 
     id = Column(INTEGER, primary_key=True, autoincrement=True)
     token = Column(VARCHAR(300))
@@ -37,7 +37,7 @@ class TokensCount(Base):
 
 class User(Base):
 
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(INTEGER, primary_key=True)
     screen_name = Column(VARCHAR(200))
@@ -59,10 +59,10 @@ class User(Base):
 
 class Tweet(Base):
 
-    __tablename__ = 'tweets'
+    __tablename__ = "tweets"
 
     tweet_id = Column(INTEGER, primary_key=True)
-    user_id = Column(INTEGER, ForeignKey('users.id'))
+    user_id = Column(INTEGER, ForeignKey("users.id"))
     created_at = Column(DATETIME)
     full_text = Column(VARCHAR(300))
     hashtags = Column(VARCHAR(300))
@@ -75,7 +75,7 @@ class Tweet(Base):
 
 
 if __name__ == "__main__":
-    engine = create_engine('sqlite:///./twitterdb.db', echo=True)
+    engine = create_engine("sqlite:///./twitterdb.db", echo=True)
     try:
         Base.metadata.create_all(engine)
         logging.info("Tables created")

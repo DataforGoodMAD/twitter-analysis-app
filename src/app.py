@@ -14,11 +14,11 @@ from tw_processor import TwitterProcessor
 load_dotenv()
 
 # Disable warnings for production. Change PYTHONWARNINGS to 'default' to debug.
-python_warnings = os.getenv('PYTHONWARNINGS')
+python_warnings = os.getenv("PYTHONWARNINGS")
 warnings.simplefilter(python_warnings)
 
 
-logger = logging.getLogger('log')
+logger = logging.getLogger("log")
 
 
 def updateTimeline(processor, queries, miner):
@@ -79,12 +79,13 @@ def updateFollowers(queries, miner, target_user):
 
 def secondGradeSearch(miner, processor, queries):
     not_reviewed_users = queries.getFollowers(
-        only_not_reviewed=True, only_followers=True)
+        only_not_reviewed=True, only_followers=True
+    )
     ref_docs = processor.toSpacyDocs(
-        queries.getUserTweets(limit=50))  # Main Account Docs
+        queries.getUserTweets(limit=50)
+    )  # Main Account Docs
     for follower in not_reviewed_users:
-        cursor = miner.followersCursor(
-            screen_name=follower.screen_name, limit=0)
+        cursor = miner.followersCursor(screen_name=follower.screen_name, limit=0)
 
         while True:
             try:
@@ -97,22 +98,28 @@ def secondGradeSearch(miner, processor, queries):
                     user = user_db
                 ff = miner.updateFriendFollower(user)
                 if ff == (0, 0) and processor.isActive(user):
+                    print(f'Analysing user "{user.screen_name}"')
                     # Request the last 50 tweets
                     tweets = miner.api.user_timeline(
-                        screen_name=user.screen_name, tweet_mode='extended', count=50)
-                    similar_tweets = processor.similarityPipe(
-                        tweets, ref_docs)
+                        screen_name=user.screen_name, tweet_mode="extended", count=50
+                    )
+                    similar_tweets = processor.similarityPipe(tweets, ref_docs)
                     user.similarity = round(
-                        mean([tweet.similarity for tweet in tweets]), 3)
+                        mean([tweet.similarity for tweet in tweets]), 3
+                    )
                     # Check if user is a database object or must be created new.
                     if isinstance(user, tweepy.models.User):
                         user_object = queries.userToDB(user)
                         queries.session.add(user_object)
                         print(
-                            f"User {user.screen_name} saved to database with similarity score {user.similarity}")
+                            f"User {user.screen_name} saved to database with similarity score {user.similarity}"
+                        )
 
-                    similar_tweets = [queries.tweetToDB(
-                        tweet) for tweet in similar_tweets if not queries.checkTweetExist(tweet)]
+                    similar_tweets = [
+                        queries.tweetToDB(tweet)
+                        for tweet in similar_tweets
+                        if not queries.checkTweetExist(tweet)
+                    ]
 
                     queries.session.add_all(similar_tweets)
 
@@ -124,14 +131,15 @@ def secondGradeSearch(miner, processor, queries):
 
             except tweepy.RateLimitError:
                 follower.reviewed = 1
+                print(f"Follower {follower.screen_name} reviewed.")
                 queries.session.commit()
-                print('Reached requests limit. Please wait 15 minutes to try again.')
+                print("Reached requests limit. Please wait 15 minutes to try again.")
                 return 0
 
         follower.reviewed = 1
-        print(f'Follower {follower.screen_name} reviewed.')
+        print(f"Follower {follower.screen_name} reviewed.")
     queries.session.commit()
-    print('Second Grade Search: Done')
+    print("Second Grade Search: Done")
 
 
 def main():
@@ -151,7 +159,7 @@ def main():
 
     except tweepy.RateLimitError:
         queries.session.commit()
-        print('Reached requests limit. Please wait 15 minutes to try again.')
+        print("Reached requests limit. Please wait 15 minutes to try again.")
         return 0
 
 
