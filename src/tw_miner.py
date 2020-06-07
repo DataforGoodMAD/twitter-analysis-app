@@ -10,19 +10,16 @@ load_dotenv()
 
 
 class TwitterMiner:
-
     def __init__(self):
 
         # Main User
-        self.username = os.getenv('USER_SCREEN_NAME')
+        self.username = os.getenv("USER_SCREEN_NAME")
 
         # Connection to Twitter API
-        self.consumer_key = os.environ.get('CONSUMER_KEY')
-        self.consumer_secret = os.environ.get('CONSUMER_SECRET_KEY')
-        self.auth = tweepy.AppAuthHandler(
-            self.consumer_key, self.consumer_secret)
-        self.api = tweepy.API(
-            self.auth)
+        self.consumer_key = os.environ.get("CONSUMER_KEY")
+        self.consumer_secret = os.environ.get("CONSUMER_SECRET_KEY")
+        self.auth = tweepy.AppAuthHandler(self.consumer_key, self.consumer_secret)
+        self.api = tweepy.API(self.auth)
 
         # API request. List of users followed by the main account.
         self.friendsList = self.api.friends_ids(screen_name=self.username)
@@ -46,14 +43,21 @@ class TwitterMiner:
             count = 200
         else:
             count = limit
-        logging.info(f'limit = {limit}, count = {count}')
+        logging.info(f"limit = {limit}, count = {count}")
         return count
 
     # TODO: Decorator for 403 error: forbiddenRequestHandler
     def maxRequestsHandler(self):
         pass
 
-    def timelineCursor(self, username, include_rts=False, exclude_replies=True, limit=200, since_id=None):
+    def timelineCursor(
+        self,
+        username,
+        include_rts=False,
+        exclude_replies=True,
+        limit=200,
+        since_id=None,
+    ):
         """
         Set limit to 0 to try to retrieve the full timeline.
         This method returns a cursor, but you have to iterate over it to make the requests.
@@ -64,23 +68,25 @@ class TwitterMiner:
             since_id = self.db_queries.topTweetId()
             if since_id:
                 since_id = since_id[0]
-        logging.info(f'since_id = {since_id}')
-        print(f'since_id = {since_id}')
-        return tweepy.Cursor(self.api.user_timeline,
-                             screen_name=username,
-                             tweet_mode='extended',
-                             since_id=since_id,
-                             include_rts=include_rts,
-                             exclude_replies=exclude_replies,
-                             count=count).items(limit)
+        logging.info(f"since_id = {since_id}")
+        print(f"since_id = {since_id}")
+        return tweepy.Cursor(
+            self.api.user_timeline,
+            screen_name=username,
+            tweet_mode="extended",
+            since_id=since_id,
+            include_rts=include_rts,
+            exclude_replies=exclude_replies,
+            count=count,
+        ).items(limit)
 
     def followersCursor(self, screen_name, limit=200):
         # TODO: include db check for stored users in this method. Check the last User on a page, and stop requesting more pages if the user is already stored in the database.
         count = self.countHandler(limit)
 
-        cursor = tweepy.Cursor(self.api.followers,
-                               id=screen_name,
-                               count=count).items(limit)
+        cursor = tweepy.Cursor(self.api.followers, id=screen_name, count=count).items(
+            limit
+        )
 
         if screen_name == self.username:
             return cursor
@@ -88,7 +94,7 @@ class TwitterMiner:
         else:
             user_reviewed = self.db_queries.checkUserReviewed(screen_name)
             if user_reviewed:
-                print(f'User {screen_name} already reviewed.')
+                print(f"User {screen_name} already reviewed.")
                 return []
             return cursor
 
@@ -100,12 +106,11 @@ class TwitterMiner:
         self.followersList = self.api.followers_ids(screen_name=self.username)
         return self.followersList
 
-    def searchCursor(self, query, result_type='recent', limit=200):
+    def searchCursor(self, query, result_type="recent", limit=200):
         count = self.countHandler(limit)
-        return tweepy.Cursor(self.api.search,
-                             q=query,
-                             result_type=result_type,
-                             count=count).items(limit)
+        return tweepy.Cursor(
+            self.api.search, q=query, result_type=result_type, count=count
+        ).items(limit)
 
     def updateFriendFollower(self, user):
         user.is_friend = 1 if user.id in self.friendsList else 0
@@ -116,5 +121,4 @@ class TwitterMiner:
 if __name__ == "__main__":
     m = TwitterMiner()
     m.username
-    print(m.api.user_timeline(
-        screen_name=m.username, tweet_mode='extended'))
+    print(m.api.user_timeline(screen_name=m.username, tweet_mode="extended"))
