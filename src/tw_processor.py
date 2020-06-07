@@ -21,6 +21,8 @@ except:
 logger = logging.getLogger('debug_logger')
 logger.info('logger working')
 
+# TODO: Añadir contador de popularidad de los tweets (token_list * retweet_count)
+
 
 class TwitterProcessor:
     # TODO: revisar idioma del lemmatizer. Configuración de idioma.

@@ -97,6 +97,7 @@ def secondGradeSearch(miner, processor, queries):
                     user = user_db
                 ff = miner.updateFriendFollower(user)
                 if ff == (0, 0) and processor.isActive(user):
+                    print(f'Analysing user "{user.screen_name}"')
                     # Request the last 50 tweets
                     tweets = miner.api.user_timeline(
                         screen_name=user.screen_name, tweet_mode='extended', count=50)
@@ -124,6 +125,7 @@ def secondGradeSearch(miner, processor, queries):
 
             except tweepy.RateLimitError:
                 follower.reviewed = 1
+                print(f'Follower {follower.screen_name} reviewed.')
                 queries.session.commit()
                 print('Reached requests limit. Please wait 15 minutes to try again.')
                 return 0
