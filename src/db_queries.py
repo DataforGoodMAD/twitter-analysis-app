@@ -180,21 +180,26 @@ class DBQueries:
     def listUsers(self):
         return self.session.query(User.id, User.screen_name).all()
 
-    def checkSecondGradeUser(self, id):
-        user = self.session.query(User).first()
+    def checkSecondGradeUser(self, user_tweepy):
+        user_db = self.session.query(User).first()
+        if not user_db:
+            return user_tweepy
         if (
-            user
-            and user.is_follower == 0
-            and user.is_friend == 0
-            and user.similarity_score == None
+            user_db
+            and user_db.is_follower == 0
+            and user_db.is_friend == 0
+            and user_db.similarity_score == None
         ):
-            return user
-        elif user:
-            return False
+            return user_db
+        elif user_db:
+            return None
 
     def checkTweetExist(self, tweet):
         q = self.session.query(Tweet).filter_by(tweet_id=tweet.id)
         return self.session.query(q.exists()).scalar()
+
+    def getUser(self, user_id):
+        return self.session.query(User).filter_by(id=user_id).first()
 
 
 if __name__ == "__main__":
@@ -203,4 +208,3 @@ if __name__ == "__main__":
     print(f"Similar users: {[i.screen_name for i in x]}")
     y = q.getFollowers(only_followers=True, only_not_reviewed=True)
     print(f"Not reviewed followers: {[e.screen_name for e in y]}")
-

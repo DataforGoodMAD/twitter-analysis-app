@@ -6,7 +6,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
 
-Base = declarative_base()
+engine = create_engine("sqlite:///./twitterdb.db", echo=True)
+Base = declarative_base(bind=engine)
 
 
 class AccountTimeline(Base):
