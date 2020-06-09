@@ -98,6 +98,24 @@ class TwitterMiner:
                 return []
             return cursor
 
+    def friendsCursor(self, screen_name, limit=200):
+        # TODO: include db check for stored users in this method. Check the last User on a page, and stop requesting more pages if the user is already stored in the database.
+        count = self.countHandler(limit)
+
+        cursor = tweepy.Cursor(self.api.friends, id=screen_name, count=count).items(
+            limit
+        )
+
+        if screen_name == self.username:
+            return cursor
+
+        else:
+            user_reviewed = self.db_queries.checkUserReviewed(screen_name)
+            if user_reviewed:
+                print(f"User {screen_name} already reviewed.")
+                return []
+            return cursor
+
     def updateFriendsList(self):
         self.friendsList = self.api.friends_ids(screen_name=self.username)
         return self.friendsList
@@ -112,10 +130,10 @@ class TwitterMiner:
             self.api.search, q=query, result_type=result_type, count=count
         ).items(limit)
 
-    def updateFriendFollower(self, user):
+    def reviewFriendFollower(self, user):
         user.is_friend = 1 if user.id in self.friendsList else 0
         user.is_follower = 1 if user.id in self.followersList else 0
-        return (user.is_follower, user.is_friend)
+        return True if user.is_friend == 0 and user.is_follower == 0 else False
 
 
 if __name__ == "__main__":

@@ -6,7 +6,9 @@ from statistics import mean
 
 import tweepy
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
 
+from db_models import Base
 from db_queries import DBQueries
 from tw_miner import TwitterMiner
 from tw_processor import TwitterProcessor
@@ -77,28 +79,56 @@ def updateFollowers(queries, miner, target_user):
     print("Update Followers: Done")
 
 
+def updateFriends(queries, miner, target_user):
+
+    stored_users = queries.listUsers()
+    cursor = miner.friendsCursor(screen_name=target_user, limit=0)
+
+    user_objects_list = []
+    for user in cursor:
+        if (user.id, user.screen_name) in stored_users:
+            user = queries.getUser(user.id)
+        user.is_friend = 1
+        user.is_follower = 1 if user.id in miner.followersList else 0
+        if isinstance(user, tweepy.models.User):
+            user_object = queries.userToDB(user)
+            user_objects_list.append(user_object)
+
+    queries.session.add_all(user_objects_list)
+    queries.session.commit()
+
+    print("Update Friends: Done")
+
+
+def reviewStoredUsers():
+    pass
+
+
 def secondGradeSearch(miner, processor, queries):
     not_reviewed_users = queries.getFollowers(
         only_not_reviewed=True, only_followers=True
     )
-    ref_docs = processor.toSpacyDocs(
-        queries.getUserTweets(limit=50)
-    )  # Main Account Docs
+    ref_docs = processor.toSpacyDocs(queries.getUserTweets(limit=50))
+
     for follower in not_reviewed_users:
         cursor = miner.followersCursor(screen_name=follower.screen_name, limit=0)
-
+        reviewed_counter = 0
         while True:
             try:
                 user = cursor.next()
-                # Check the user on the database, and looks for is_follower is_friend and similarity_score.
-                user_db = queries.checkSecondGradeUser(user.id)
-                if user_db is False:
+
+                if user.followers_count >= 3200 and reviewed_counter == 0:
+                    user.reviewed = 1
+
+                user = queries.checkSecondGradeUser(user)
+                if (
+                    not user
+                    or miner.reviewFriendFollower(user) == False
+                    or processor.isActive(user) == False
+                ):
                     continue
-                elif user_db:
-                    user = user_db
-                ff = miner.updateFriendFollower(user)
-                if ff == (0, 0) and processor.isActive(user):
-                    print(f'Analysing user "{user.screen_name}"')
+                else:
+                    print(f"Reviewing user {user.screen_name}")
                     # Request the last 50 tweets
                     tweets = miner.api.user_timeline(
                         screen_name=user.screen_name, tweet_mode="extended", count=50
@@ -130,13 +160,14 @@ def secondGradeSearch(miner, processor, queries):
                 break
 
             except tweepy.RateLimitError:
-                follower.reviewed = 1
                 print(f"Follower {follower.screen_name} reviewed.")
                 queries.session.commit()
                 print("Reached requests limit. Please wait 15 minutes to try again.")
                 return 0
 
         follower.reviewed = 1
+        reviewed_counter += 1
+
         print(f"Follower {follower.screen_name} reviewed.")
     queries.session.commit()
     print("Second Grade Search: Done")
@@ -144,6 +175,7 @@ def secondGradeSearch(miner, processor, queries):
 
 def main():
     try:
+        Base.metadata.create_all()
 
         processor = TwitterProcessor()
         print("TwitterProcessor instance created")
@@ -155,7 +187,8 @@ def main():
         updateTimeline(processor, queries, miner)
         updateTokensCount(processor, queries)
         updateFollowers(queries, miner, miner.username)
-        secondGradeSearch(miner, processor, queries)
+        updateFriends(queries, miner, miner.username)
+        # secondGradeSearch(miner, processor, queries)
 
     except tweepy.RateLimitError:
         queries.session.commit()
