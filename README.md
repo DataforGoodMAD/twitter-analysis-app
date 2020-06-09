@@ -12,22 +12,14 @@ Setup instructions:
 
 4. Within the main folder of the project, create a file named _.env_ and add to it the variables CONSUMER_KEY and CONSUMER_SECRET_KEY (those are your Twitter API Keys), and USER_SCREEN_NAME (this is the screen name of the main user account).
 
-5. Run the db_models.py to create the database:
-   ```
-   python ./src/db_models.py
-   ```
-6. Run the app.py file to fill the database with the main user timeline, tokens and followers.
+5. Run the app.py file to fill the database with the main user timeline, tokens and followers.
 
    ```
    python ./src/app.py
    ```
 
-   \*\* If you can't run any of the files, try granting execution permissions:
+   \*\* If you can't run the file, try granting execution permissions:
 
    ```
    chmod +x <filename>
    ```
-
-# Dev:
-
-Database: Table Users: field user_id renamed to id. Change on dashboards.

@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 
 import es_core_news_md  # spaCy pretrained model
 import nltk
-import pandas as pd
 import spacy
 from nltk.stem import WordNetLemmatizer
 
