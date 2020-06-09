@@ -1,5 +1,3 @@
-import logging
-
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.sqlite import DATETIME, BOOLEAN, INTEGER, VARCHAR, FLOAT
 from sqlalchemy.ext.declarative import declarative_base
@@ -73,12 +71,3 @@ class Tweet(Base):
     favorite_count = Column(INTEGER)
     similarity_score = Column(FLOAT, nullable=True)
     user = relationship("User", back_populates="tweets")
-
-
-if __name__ == "__main__":
-    engine = create_engine("sqlite:///./twitterdb.db", echo=True)
-    try:
-        Base.metadata.create_all(engine)
-        logging.info("Tables created")
-    except Exception as e:
-        logging.error(e)
