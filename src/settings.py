@@ -1,16 +1,12 @@
 import tweepy
-from dotenv import load_dotenv, get_key
-
-load_dotenv()
-
-
-def get_keys(keys):
-    return [True if get_key(".test", key) else False for key in keys]
+from dotenv import load_dotenv, dotenv_values
+import logging
 
 
 def configCheck():
+    load_dotenv()
     keys = ["CONSUMER_KEY", "CONSUMER_SECRET_KEY", "USER_SCREEN_NAME"]
-    if get_keys(keys) == [True] * 3:
+    if all([dotenv_values().get(key, None) for key in keys]):
         print("Welcome back! Let's go!")
         return True
     else:
@@ -19,8 +15,8 @@ def configCheck():
 
 def firstTimeConfig():
     while True:
-        consumer_key = input('Please enter your Twitter "CONSUMER_KEY:')
-        consumer_secret_key = input('Please enter your Twitter "CONSUMER_SECRET_KEY:')
+        consumer_key = input('Please enter your Twitter "CONSUMER_KEY":')
+        consumer_secret_key = input('Please enter your Twitter "CONSUMER_SECRET_KEY":')
         user_screen_name = input("Please enter your Twitter Username:")
         try:
             while True:
@@ -39,7 +35,7 @@ def firstTimeConfig():
                     continue
                 else:
                     break
-            with open(".test", "w+") as f:
+            with open(".env", "w+") as f:
                 env_file_input = f"CONSUMER_KEY={consumer_key}\nCONSUMER_SECRET_KEY={consumer_secret_key}\nUSER_SCREEN_NAME={user_screen_name}\nPYTHONWARNINGS=ignore"
                 f.write(env_file_input)
             print(
@@ -47,8 +43,8 @@ def firstTimeConfig():
             )
             break
         except Exception as e:
-
-            print("Something went wrong. Please input your data again.")
+            logging.error(e)
+            print("Something went wrong. Please enter your data again.")
             continue
 
 
