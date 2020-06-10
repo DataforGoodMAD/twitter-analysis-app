@@ -35,7 +35,7 @@ def firstTimeConfig():
                     continue
                 else:
                     break
-            with open(".env", "w+") as f:
+            with open(".env", "a") as f:
                 env_file_input = f"CONSUMER_KEY={consumer_key}\nCONSUMER_SECRET_KEY={consumer_secret_key}\nUSER_SCREEN_NAME={user_screen_name}\nPYTHONWARNINGS=ignore"
                 f.write(env_file_input)
             print(

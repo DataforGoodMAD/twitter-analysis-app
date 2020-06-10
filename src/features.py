@@ -153,32 +153,6 @@ def secondGradeSearch(miner, processor, queries):
     print("Second Grade Search: Done")
 
 
-def main():
-    try:
-        configCheck()
-        Base.metadata.create_all()
-        print("Database Loaded.")
-
-        processor = TwitterProcessor()
-        print("TwitterProcessor instance created")
-        queries = DBQueries()
-        print("DBQueries instance created")
-        miner = TwitterMiner()
-        print("TwitterMiner instance created")
-
-        updateTimeline(processor, queries, miner)
-        updateTokensCount(processor, queries)
-        updateFollowers(queries, miner, miner.username)
-        updateFriends(queries, miner, miner.username)
-        secondGradeSearch(miner, processor, queries)
-
-    except tweepy.RateLimitError:
-        queries.session.commit()
-        print(
-            "We're done for the moment! We have reached the requests limit set by Twitter for a basic account. Please wait 15 minutes to try again."
-        )
-        return 0
-
+from log_config import logger
 
 if __name__ == "__main__":
-    main()

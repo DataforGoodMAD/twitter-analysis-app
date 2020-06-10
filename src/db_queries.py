@@ -207,7 +207,7 @@ if __name__ == "__main__":
     x = (
         q.session.query(User)
         .filter(User.similarity_score >= 0.7)
-        .order_by(User.friends_count.desc())
+        .order_by(User.similarity_score.desc())
         .all()
     )
     print(f"Similar users: {[(i.screen_name, i.similarity_score) for i in x]}")

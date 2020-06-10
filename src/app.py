@@ -1,27 +1,26 @@
-import logging
+from log_config import logger
 import os
 import sys
 import warnings
+import contextlib
 
 import tweepy
 
 from db_models import Base
 from db_queries import DBQueries
-from tw_miner import TwitterMiner
-from tw_processor import TwitterProcessor
-from settings import configCheck, firstTimeConfig
 from features import (
-    updateTimeline,
-    updateTokensCount,
+    secondGradeSearch,
     updateFollowers,
     updateFriends,
-    secondGradeSearch,
+    updateTimeline,
+    updateTokensCount,
 )
+from settings import configCheck, firstTimeConfig
+from tw_miner import TwitterMiner
+from tw_processor import TwitterProcessor
 
 
 def main():
-
-    logger = logging.getLogger("log")
 
     configCheck()
     # Disable warnings for production. Change PYTHONWARNINGS to 'default' to debug.
@@ -29,7 +28,7 @@ def main():
     warnings.simplefilter(python_warnings)
 
     try:
-        Base.metadata.create_all()
+        logger.info(Base.metadata.create_all())
         print("Database Loaded.")
 
         processor = TwitterProcessor()
@@ -47,6 +46,7 @@ def main():
 
     except tweepy.RateLimitError:
         queries.session.commit()
+        logging.exception("Exception occurred")
         print(
             "We're done for the moment! We have reached the requests limit set by Twitter for a basic account. Please wait 15 minutes to try again."
         )
