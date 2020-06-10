@@ -22,7 +22,7 @@ Setup instructions:
 
 6. Follow the instructions. You'll have to input your Twitter API keys and the Username you want to config for the app. That information will be stored locally in a _.env_ file within the main folder of the project.
 
-   \* If you prefer to create the _.env_ file by yourself, the required variables are: CONSUMER_KEY, CONSUMER_SECRET_KEY (those are your Twitter API Keys), USER_SCREEN_NAME (this is the screen name of the main user account), and PYTHONWARNINGS, that you can set to "ignore" for production, or check the available options [here](https://docs.python.org/3/library/warnings.html).
+   \* If you prefer to create the _.env_ file by yourself, the required variables are: CONSUMER_KEY, CONSUMER_SECRET_KEY (those are your Twitter API Keys), and USER_SCREEN_NAME (this is the screen name of the main user account).
 
    \*\* If you can't run the file, try granting execution permissions:
 

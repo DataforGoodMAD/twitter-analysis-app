@@ -1,6 +1,7 @@
 import tweepy
-from dotenv import load_dotenv, dotenv_values
-import logging
+from dotenv import dotenv_values, load_dotenv
+import os
+from log_config import logger
 
 
 def configCheck():
@@ -36,14 +37,15 @@ def firstTimeConfig():
                 else:
                     break
             with open(".env", "a") as f:
-                env_file_input = f"CONSUMER_KEY={consumer_key}\nCONSUMER_SECRET_KEY={consumer_secret_key}\nUSER_SCREEN_NAME={user_screen_name}\nPYTHONWARNINGS=ignore"
+                env_file_input = f"CONSUMER_KEY={consumer_key}\nCONSUMER_SECRET_KEY={consumer_secret_key}\nUSER_SCREEN_NAME={user_screen_name}"
                 f.write(env_file_input)
             print(
                 "Great! Your setup is complete. Let's start working! Please, do not close your terminal until the process is finished. You'll now when it's done."
             )
+            load_dotenv()
             break
-        except Exception as e:
-            logging.error(e)
+        except Exception:
+            logger.exception("Exception occurred")
             print("Something went wrong. Please enter your data again.")
             continue
 
