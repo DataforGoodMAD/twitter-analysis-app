@@ -25,9 +25,12 @@ logger.info("logger working")
 
 class TwitterProcessor:
     # TODO: revisar idioma del lemmatizer. Configuración de idioma.
-    def __init__(self, counter=Counter(), lemmatizer=WordNetLemmatizer()):
+    def __init__(
+        self, counter=Counter(), popcounter=Counter(), lemmatizer=WordNetLemmatizer()
+    ):
 
         self.__counter = counter
+        self.__popCounter = popcounter
         self.lemmatizer = lemmatizer
         self.punctuation = "¡!\"$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
         self.stopWords = set(stopwords.words("spanish") + stopwords.words("english"))
@@ -83,6 +86,14 @@ class TwitterProcessor:
         return self.__counter
 
     def updateCounter(self, token_list):
+        self.counter.update(token_list)
+        return self.__counter
+
+    @property
+    def popCounter(self):
+        return self.__counter
+
+    def updatepopCounter(self, token_list):
         self.counter.update(token_list)
         return self.__counter
 

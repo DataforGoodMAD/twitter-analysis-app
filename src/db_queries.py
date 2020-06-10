@@ -131,7 +131,7 @@ class DBQueries:
         except Exception as e:
             print(e)
 
-    def getFollowers(
+    def getUsers(
         self, only_not_reviewed=False, only_followers=False, only_friends=False
     ):
         query = "self.session.query(User)"
@@ -181,9 +181,7 @@ class DBQueries:
         return self.session.query(User.id, User.screen_name).all()
 
     def checkSecondGradeUser(self, user_tweepy):
-        user_db = self.session.query(User).first()
-        if not user_db:
-            return user_tweepy
+        user_db = self.session.query(User).filter_by(id=user_tweepy.id).first()
         if (
             user_db
             and user_db.is_follower == 0
@@ -193,6 +191,8 @@ class DBQueries:
             return user_db
         elif user_db:
             return None
+        else:
+            return user_tweepy
 
     def checkTweetExist(self, tweet):
         q = self.session.query(Tweet).filter_by(tweet_id=tweet.id)
@@ -204,7 +204,10 @@ class DBQueries:
 
 if __name__ == "__main__":
     q = DBQueries()
-    x = q.session.query(User).filter(User.similarity_score >= 0.7).all()
-    print(f"Similar users: {[i.screen_name for i in x]}")
-    y = q.getFollowers(only_followers=True, only_not_reviewed=True)
-    print(f"Not reviewed followers: {[e.screen_name for e in y]}")
+    x = (
+        q.session.query(User)
+        .filter(User.similarity_score >= 0.7)
+        .order_by(User.friends_count.desc())
+        .all()
+    )
+    print(f"Similar users: {[(i.screen_name, i.similarity_score) for i in x]}")
