@@ -3,7 +3,6 @@ import os
 import sys
 import warnings
 from statistics import mean
-from contextlib import contextmanager
 
 
 import tweepy
