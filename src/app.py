@@ -3,6 +3,8 @@ import os
 import sys
 import warnings
 from statistics import mean
+from contextlib import contextmanager
+
 
 import tweepy
 from dotenv import load_dotenv
@@ -20,7 +22,7 @@ python_warnings = os.getenv("PYTHONWARNINGS")
 warnings.simplefilter(python_warnings)
 
 
-logger = logging.getLogger("log")
+logger = logging.getLogger(__name__)
 
 
 def updateTimeline(processor, queries, miner):
@@ -40,6 +42,9 @@ def updateTimeline(processor, queries, miner):
             queries.session.add(tweet_object)
             tokens_list = processor.tweetTokenizer(tweet.full_text)
             processor.updateCounter(tokens_list)
+            processor.updatepopCounter(
+                tokens_list, tweet.retweet_count, tweet.favorite_count
+            )
 
     queries.session.commit()
     print("Update Timeline: Done")
@@ -49,8 +54,8 @@ def updateTokensCount(processor, queries):
     """Updates the tokens_count table with the latest tweets from the main user.
 
     Arguments:
-        processor {[type]} -- [description]
-        queries {[type]} -- [description]
+        processor {[TwitterProcessor object]} -- [instance from the local class defined at tw_processor.py]
+        queries {[DBQueries object]} -- [instance from the local class defined at tw_processor.py]
     """
     token_object_list = queries.tokenstoDB(processor.counter)
     queries.session.add_all(token_object_list)
@@ -100,35 +105,26 @@ def updateFriends(queries, miner, target_user):
     print("Update Friends: Done")
 
 
-def reviewStoredUsers():
-    pass
-
-
 def secondGradeSearch(miner, processor, queries):
-    not_reviewed_users = queries.getFollowers(
-        only_not_reviewed=True, only_followers=True
-    )
+    not_reviewed_users = queries.getUsers(only_not_reviewed=True, only_followers=True)
     ref_docs = processor.toSpacyDocs(queries.getUserTweets(limit=50))
 
     for follower in not_reviewed_users:
         cursor = miner.followersCursor(screen_name=follower.screen_name, limit=0)
         reviewed_counter = 0
+        if follower.followers_count >= 3200 and reviewed_counter == 0:
+            follower.reviewed = 1
         while True:
             try:
                 user = cursor.next()
-
-                if user.followers_count >= 3200 and reviewed_counter == 0:
-                    user.reviewed = 1
-
-                user = queries.checkSecondGradeUser(user)
+                user = queries.checkSecondGradeUser(user)  # Check user on db
                 if (
                     not user
-                    or miner.reviewFriendFollower(user) == False
-                    or processor.isActive(user) == False
+                    or miner.reviewFriendFollower(user) == False  # Check with Twitter
+                    or processor.isActive(user) == False  # Check activity
                 ):
                     continue
                 else:
-                    print(f"Reviewing user {user.screen_name}")
                     # Request the last 50 tweets
                     tweets = miner.api.user_timeline(
                         screen_name=user.screen_name, tweet_mode="extended", count=50
@@ -159,12 +155,6 @@ def secondGradeSearch(miner, processor, queries):
             except StopIteration:
                 break
 
-            except tweepy.RateLimitError:
-                print(f"Follower {follower.screen_name} reviewed.")
-                queries.session.commit()
-                print("Reached requests limit. Please wait 15 minutes to try again.")
-                return 0
-
         follower.reviewed = 1
         reviewed_counter += 1
 
@@ -188,7 +178,7 @@ def main():
         updateTokensCount(processor, queries)
         updateFollowers(queries, miner, miner.username)
         updateFriends(queries, miner, miner.username)
-        # secondGradeSearch(miner, processor, queries)
+        secondGradeSearch(miner, processor, queries)
 
     except tweepy.RateLimitError:
         queries.session.commit()
