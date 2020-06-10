@@ -4,7 +4,6 @@ import sys
 import warnings
 from statistics import mean
 
-
 import tweepy
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
@@ -181,7 +180,9 @@ def main():
 
     except tweepy.RateLimitError:
         queries.session.commit()
-        print("Reached requests limit. Please wait 15 minutes to try again.")
+        print(
+            "We're done for the moment! We have reached the requests limit set by Twitter for a basic account. Please wait 15 minutes to try again."
+        )
         return 0
 
 
