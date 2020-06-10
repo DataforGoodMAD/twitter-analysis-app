@@ -1,4 +1,4 @@
-import logging
+from log_config import logger
 import os
 import re
 from datetime import datetime
@@ -67,7 +67,7 @@ class DBQueries:
             return tweet_object
 
         except Exception as e:
-            logging.error(e)
+            logger.exception("Exception occurred")
 
     def tokenstoDB(self, counter):
         """Transforms a Counter object to a list of objects of the TokensCount model.

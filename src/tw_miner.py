@@ -1,4 +1,4 @@
-import logging
+from log_config import logger
 import os
 
 import tweepy
@@ -43,7 +43,6 @@ class TwitterMiner:
             count = 200
         else:
             count = limit
-        logging.info(f"limit = {limit}, count = {count}")
         return count
 
     # TODO: Decorator for 403 error: forbiddenRequestHandler
@@ -68,7 +67,7 @@ class TwitterMiner:
             since_id = self.db_queries.topTweetId()
             if since_id:
                 since_id = since_id[0]
-        logging.info(f"since_id = {since_id}")
+        logger.info(f"since_id = {since_id}")
         print(f"since_id = {since_id}")
         return tweepy.Cursor(
             self.api.user_timeline,

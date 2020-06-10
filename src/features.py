@@ -1,4 +1,3 @@
-import logging
 from statistics import mean
 
 import tweepy
@@ -11,8 +10,6 @@ from tw_processor import TwitterProcessor
 from settings import configCheck, firstTimeConfig
 
 load_dotenv()
-
-logger = logging.getLogger("log")
 
 
 def updateTimeline(processor, queries, miner):
@@ -32,9 +29,6 @@ def updateTimeline(processor, queries, miner):
             queries.session.add(tweet_object)
             tokens_list = processor.tweetTokenizer(tweet.full_text)
             processor.updateCounter(tokens_list)
-            processor.updatepopCounter(
-                tokens_list, tweet.retweet_count, tweet.favorite_count
-            )
 
     queries.session.commit()
     print("Update Timeline: Done")
@@ -156,3 +150,4 @@ def secondGradeSearch(miner, processor, queries):
 from log_config import logger
 
 if __name__ == "__main__":
+    pass
