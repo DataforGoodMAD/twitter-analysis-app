@@ -1,9 +1,10 @@
-import logging
 import re
 import unicodedata
 from collections import Counter
 from statistics import mean
 from datetime import datetime, timedelta
+from log_config import logger
+import warnings
 
 import es_core_news_md  # spaCy pretrained model
 import nltk
@@ -15,10 +16,6 @@ try:
 except:
     nltk.download("stopwords")
     from nltk.corpus import stopwords
-
-
-logger = logging.getLogger("debug_logger")
-logger.info("logger working")
 
 # TODO: Añadir contador de popularidad de los tweets (token_list * retweet_count)
 
@@ -118,14 +115,21 @@ class TwitterProcessor:
         return docs
 
     def similarityPipe(self, tweet_list, ref_docs):
-        for tweet in tweet_list:
-            if tweet.display_text_range != "[0,0]":
-                tweet_tokenized = " ".join(self.tweetTokenizer(tweet.full_text))
-                spacy_doc = self.nlp.make_doc(tweet_tokenized)
-                tweet.similarity = round(
-                    mean([spacy_doc.similarity(user_tweet) for user_tweet in ref_docs]),
-                    3,
-                )
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+            for tweet in tweet_list:
+                if tweet.display_text_range != "[0,0]":
+                    tweet_tokenized = " ".join(self.tweetTokenizer(tweet.full_text))
+                    spacy_doc = self.nlp.make_doc(tweet_tokenized)
+                    tweet.similarity = round(
+                        mean(
+                            [
+                                spacy_doc.similarity(user_tweet)
+                                for user_tweet in ref_docs
+                            ]
+                        ),
+                        3,
+                    )
         return [tweet for tweet in tweet_list if tweet.similarity > 0.7]
 
     def isActive(self, user):

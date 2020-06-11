@@ -1,4 +1,4 @@
-import logging
+from log_config import logger
 import os
 import re
 from datetime import datetime
@@ -20,7 +20,8 @@ class DBQueries:
         # Connection to Database
         self.engine = create_engine("sqlite:///./twitterdb.db", echo=False)
         self._Session = sessionmaker(bind=self.engine)
-        self.session = self._Session()
+        self._session = self._Session()
+        self.session = self._session
 
     def topTweetId(self):
         return self.session.query(func.max(AccountTimeline.tweet_id)).one()
@@ -66,8 +67,8 @@ class DBQueries:
 
             return tweet_object
 
-        except Exception as e:
-            logging.error(e)
+        except Exception:
+            logger.exception("Exception occurred")
 
     def tokenstoDB(self, counter):
         """Transforms a Counter object to a list of objects of the TokensCount model.
@@ -100,8 +101,6 @@ class DBQueries:
         return token_object_list
 
     def userToDB(self, user):
-        # TODO: Revisar como conseguir el "is_friend" en el endpoint de "friendships". Ver como actualizar el reviewed.
-
         try:
             params = {
                 "id": user.id,
@@ -207,7 +206,7 @@ if __name__ == "__main__":
     x = (
         q.session.query(User)
         .filter(User.similarity_score >= 0.7)
-        .order_by(User.friends_count.desc())
+        .order_by(User.similarity_score.desc())
         .all()
     )
     print(f"Similar users: {[(i.screen_name, i.similarity_score) for i in x]}")

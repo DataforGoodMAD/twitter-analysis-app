@@ -1,5 +1,7 @@
 # twitter-analysis-app
 
+This is a standalone and serverless app, that helps you find people around you that migth be interested in your content. It uses NLP to compare your content with your follower's followers and provides a similarity score between 0 and 1. It builds a sqlite database, so you can connect it to your favorite Data Visualization tool.
+
 Setup instructions:
 
 1. Clone this repo to your computer.
@@ -10,13 +12,17 @@ Setup instructions:
    pip install -r requirements.txt
    ```
 
-4. Within the main folder of the project, create a file named _.env_ and add to it the variables CONSUMER_KEY and CONSUMER_SECRET_KEY (those are your Twitter API Keys), and USER_SCREEN_NAME (this is the screen name of the main user account).
+4. Within the main folder of the project, create a file named _.env_ and add to it the variables
 
-5. Run the app.py file to create the database and fill it with the main user timeline, tokens, followers and friends.
+5. Run the app.py in your terminal with:
 
    ```
    python ./src/app.py
    ```
+
+6. Follow the instructions. You'll have to input your Twitter API keys and the Username you want to config for the app. That information will be stored locally in a _.env_ file within the main folder of the project.
+
+   \* If you prefer to create the _.env_ file by yourself, the required variables are: CONSUMER_KEY, CONSUMER_SECRET_KEY (those are your Twitter API Keys), and USER_SCREEN_NAME (this is the screen name of the main user account).
 
    \*\* If you can't run the file, try granting execution permissions:
 
