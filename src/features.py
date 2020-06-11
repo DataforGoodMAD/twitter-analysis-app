@@ -99,6 +99,7 @@ def secondGradeSearch(miner, processor, queries):
         if follower.followers_count >= 3200 and reviewed_counter == 0:
             follower.reviewed = 1
         while True:
+            # TODO: intentar paralelizarlo con concurrent.futures:
             try:
                 user = cursor.next()
                 user = queries.checkSecondGradeUser(user)  # Check user on db

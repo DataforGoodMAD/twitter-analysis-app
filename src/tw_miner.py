@@ -45,10 +45,6 @@ class TwitterMiner:
             count = limit
         return count
 
-    # TODO: Decorator for 403 error: forbiddenRequestHandler
-    def maxRequestsHandler(self):
-        pass
-
     def timelineCursor(
         self,
         username,
@@ -80,7 +76,6 @@ class TwitterMiner:
         ).items(limit)
 
     def followersCursor(self, screen_name, limit=200):
-        # TODO: include db check for stored users in this method. Check the last User on a page, and stop requesting more pages if the user is already stored in the database.
         count = self.countHandler(limit)
 
         cursor = tweepy.Cursor(self.api.followers, id=screen_name, count=count).items(
@@ -98,7 +93,6 @@ class TwitterMiner:
             return cursor
 
     def friendsCursor(self, screen_name, limit=200):
-        # TODO: include db check for stored users in this method. Check the last User on a page, and stop requesting more pages if the user is already stored in the database.
         count = self.countHandler(limit)
 
         cursor = tweepy.Cursor(self.api.friends, id=screen_name, count=count).items(
