@@ -1,19 +1,18 @@
 import tweepy
 
-from db_models import Base
-from db_queries import DBQueries
-from features import (
+from src.db_models import Base
+from src.db_queries import DBQueries
+from src.features import (
     secondGradeSearch,
     updateFollowers,
     updateFriends,
     updateTimeline,
     updateTokensCount,
 )
-from log_config import logger
-from settings import configCheck, firstTimeConfig
-from tw_miner import TwitterMiner
-from tw_processor import TwitterProcessor
-import settings
+from src.log_config import logger
+from src.settings import configCheck, firstTimeConfig
+from src.tw_miner import TwitterMiner
+from src.tw_processor import TwitterProcessor
 
 
 def main():
@@ -47,4 +46,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    pass

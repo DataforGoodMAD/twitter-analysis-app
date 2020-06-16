@@ -3,11 +3,11 @@ from statistics import mean
 import tweepy
 from dotenv import load_dotenv
 
-from db_models import Base
-from db_queries import DBQueries
-from tw_miner import TwitterMiner
-from tw_processor import TwitterProcessor
-from settings import configCheck, firstTimeConfig
+from src.db_models import Base
+from src.db_queries import DBQueries
+from src.tw_miner import TwitterMiner
+from src.tw_processor import TwitterProcessor
+from src.settings import configCheck, firstTimeConfig
 
 load_dotenv()
 
@@ -147,8 +147,6 @@ def secondGradeSearch(miner, processor, queries):
     queries.session.commit()
     print("Second Grade Search: Done")
 
-
-from log_config import logger
 
 if __name__ == "__main__":
     pass

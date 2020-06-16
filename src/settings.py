@@ -1,7 +1,7 @@
 import tweepy
 from dotenv import dotenv_values, load_dotenv
 import os
-from log_config import logger
+from src.log_config import logger
 
 
 def configCheck():

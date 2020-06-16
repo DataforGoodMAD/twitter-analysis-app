@@ -1,15 +1,16 @@
 import re
 import unicodedata
-from collections import Counter
-from statistics import mean
-from datetime import datetime, timedelta
-from log_config import logger
 import warnings
+from collections import Counter
+from datetime import datetime, timedelta
+from statistics import mean
 
 import es_core_news_md  # spaCy pretrained model
 import nltk
 import spacy
 from nltk.stem import WordNetLemmatizer
+
+from src.log_config import logger
 
 try:
     from nltk.corpus import stopwords
