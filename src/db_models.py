@@ -30,6 +30,7 @@ class TokensCount(Base):
     id = Column(INTEGER, primary_key=True, autoincrement=True)
     token = Column(VARCHAR(300))
     cumulated_count = Column(INTEGER)
+    popularity_count = Column(INTEGER)
     is_hashtag = Column(BOOLEAN)
     last_updated = Column(DATETIME)
 

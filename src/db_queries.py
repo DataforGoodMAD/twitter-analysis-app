@@ -70,7 +70,7 @@ class DBQueries:
         except Exception:
             logger.exception("Exception occurred")
 
-    def tokenstoDB(self, counter):
+    def tokenstoDB(self, counter, popCounter):
         """Transforms a Counter object to a list of objects of the TokensCount model.
 
         Arguments:
@@ -85,15 +85,20 @@ class DBQueries:
         for token_object in tokens_query:
             if token_object.token in keys:
                 token_object.cumulated_count += counter.get(token_object.token)
+                token_object.popularity_count += popCounter.get(token_object.token)
                 token_object.last_updated = datetime.now()
                 del counter[token_object.token]
 
         token_object_list = []
-        for token, value in counter.items():
+        for count, pop_count in zip(counter.items(), popCounter.items()):
+            token = count[0]
+            value = count[1]
+            pop_value = pop_count[1]
             if len(token) > 2:
                 token_object = TokensCount(
                     token=token,
                     cumulated_count=value,
+                    popularity_count=pop_value,
                     is_hashtag=True if re.match(r"^#", token) else False,
                     last_updated=datetime.now(),
                 )
