@@ -15,10 +15,10 @@ from src.log_config import logger
 try:
     from nltk.corpus import stopwords
 except:
-    nltk.download("stopwords")
+    data_path = "../nltk_data"
+    nltk.data.path.append(data_path)
+    nltk.download("stopwords", download_dir=data_path)
     from nltk.corpus import stopwords
-
-# TODO: Añadir contador de popularidad de los tweets (token_list * retweet_count)
 
 
 class TwitterProcessor:
