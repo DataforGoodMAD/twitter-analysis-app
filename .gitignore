@@ -134,3 +134,6 @@ twitterdb.db
 notebooks
 log
 tests
+*.spec
+build/
+dist/

@@ -1,23 +1,24 @@
 import re
 import unicodedata
-from collections import Counter
-from statistics import mean
-from datetime import datetime, timedelta
-from log_config import logger
 import warnings
+from collections import Counter
+from datetime import datetime, timedelta
+from statistics import mean
 
 import es_core_news_md  # spaCy pretrained model
 import nltk
 import spacy
 from nltk.stem import WordNetLemmatizer
 
+from src.log_config import logger
+
 try:
     from nltk.corpus import stopwords
 except:
-    nltk.download("stopwords")
+    data_path = "../nltk_data"
+    nltk.data.path.append(data_path)
+    nltk.download("stopwords", download_dir=data_path)
     from nltk.corpus import stopwords
-
-# TODO: Añadir contador de popularidad de los tweets (token_list * retweet_count)
 
 
 class TwitterProcessor:
