@@ -1,3 +1,5 @@
+import time
+
 import tweepy
 
 from src.db_models import Base
@@ -16,6 +18,7 @@ from src.tw_processor import TwitterProcessor
 
 
 def main():
+    start = time.time()
 
     configCheck()
 
@@ -39,9 +42,19 @@ def main():
     except tweepy.RateLimitError:
         queries.session.commit()
         logger.exception("Exception occurred")
+        end = time.time()
+        elapsed = round(end - start, 2)
         print(
-            "We're done for the moment! We have reached the requests limit set by Twitter for a basic account. Please wait 15 minutes to try again."
+            f"""
+            ######################
+            We're done for the moment!
+            The process has taken: {elapsed} seconds 
+            You have reached the requests limit set by Twitter for a basic account. 
+            Please wait 15 minutes to try again.
+            ######################
+            """
         )
+        print()
         return 0
 
 

@@ -39,6 +39,7 @@ class TwitterProcessor:
         return f"""
         TweetsProcessor object:
         Counter: {self.__counter}
+        Pop Counter: {self.__popCounter}
         Lemmatizer: {self.lemmatizer}
         """
 
@@ -89,17 +90,11 @@ class TwitterProcessor:
 
     @property
     def popCounter(self):
-        return self.__counter
+        return self.__popCounter
 
     def updatepopCounter(self, token_list):
-        self.counter.update(token_list)
-        return self.__counter
-
-    # DEPRECADO:
-    # def similarityCompare(self, spacy_doc, ref_docs):
-    #     similarity = round(mean([spacy_doc.similarity(
-    #         user_tweet) for user_tweet in ref_docs]), 3)
-    #     return similarity
+        self.popCounter.update(token_list)
+        return self.__popCounter
 
     def toSpacyDocs(self, batch_of_tweets):
         with self.nlp.disable_pipes(self.nlp.pipe_names):
@@ -146,4 +141,8 @@ class TwitterProcessor:
 
 if __name__ == "__main__":
     p = TwitterProcessor()
-    p
+    lst = ["x", "y", "z"]
+    p.counter.update(lst)
+    print(len(p.counter))
+    p.popCounter.update(lst * int((3 + (2 * 0.3))))
+    print(len(p.popCounter))

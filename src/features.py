@@ -29,6 +29,9 @@ def updateTimeline(processor, queries, miner):
             queries.session.add(tweet_object)
             tokens_list = processor.tweetTokenizer(tweet.full_text)
             processor.updateCounter(tokens_list)
+            processor.updatepopCounter(
+                tokens_list * int(((tweet.retweet_count * 3) + tweet.favorite_count))
+            )
 
     queries.session.commit()
     print("Update Timeline: Done")
@@ -41,7 +44,7 @@ def updateTokensCount(processor, queries):
         processor {[TwitterProcessor object]} -- [instance from the local class defined at tw_processor.py]
         queries {[DBQueries object]} -- [instance from the local class defined at tw_processor.py]
     """
-    token_object_list = queries.tokenstoDB(processor.counter)
+    token_object_list = queries.tokenstoDB(processor.counter, processor.popCounter)
     queries.session.add_all(token_object_list)
     queries.session.commit()
     print("Update Tokens: Done")
