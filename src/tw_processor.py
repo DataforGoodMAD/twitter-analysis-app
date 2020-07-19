@@ -8,17 +8,20 @@ from statistics import mean
 import es_core_news_md  # spaCy pretrained model
 import nltk
 import spacy
-from nltk.stem import WordNetLemmatizer
 
 from src.log_config import logger
 
 try:
     from nltk.corpus import stopwords
 except:
-    data_path = "../nltk_data"
-    nltk.data.path.append(data_path)
-    nltk.download("stopwords", download_dir=data_path)
+    nltk.download('stopwords')
     from nltk.corpus import stopwords
+
+try:
+    from nltk.stem import WordNetLemmatizer
+except:
+    nltk.download('wordnet')
+    from nltk.stem import WordNetLemmatizer
 
 
 class TwitterProcessor:

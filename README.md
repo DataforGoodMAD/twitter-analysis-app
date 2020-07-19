@@ -12,7 +12,10 @@ Setup instructions:
    pip install -r requirements.txt
    ```
 
-4. Within the main folder of the project, create a file named _.env_ and add to it the variables
+4. Download the data for NLTK with: 
+   ```
+   python -m nltk.downloader wordnet stopwords
+   ```
 
 5. Run the app.py in your terminal with:
 
@@ -20,7 +23,7 @@ Setup instructions:
    python ./src/app.py
    ```
 
-6. Follow the instructions. You'll have to input your Twitter API keys and the Username you want to config for the app. That information will be stored locally in a _.env_ file within the main folder of the project.
+   The first time you run the app, you'll have to input your Twitter API keys and the Username you want to config for the app. That information will be stored locally in a _.env_ file within the main folder of the project.
 
    \* If you prefer to create the _.env_ file by yourself, the required variables are: CONSUMER_KEY, CONSUMER_SECRET_KEY (those are your Twitter API Keys), and USER_SCREEN_NAME (this is the screen name of the main user account).
 
@@ -28,4 +31,10 @@ Setup instructions:
 
    ```
    chmod +x <filename>
+   ```
+
+6. To build a standalone executable file, you can use PyInstaller (the required version is already included in the `requirements.txt`). You can do it with:
+
+   ```
+   pyinstaller --onefile -c -n twitter_influence --additional-hooks-dir pyinstaller-hooks
    ```

@@ -4,3 +4,4 @@ nltk==3.5
 spacy==2.2.4
 https://github.com/explosion/spacy-models/releases/download/es_core_news_md-2.2.5/es_core_news_md-2.2.5.tar.gz
 python-dotenv==0.13.0
+git+https://github.com/pyinstaller/pyinstaller.git#d30785c9a46493fc84cd68fa29d1743219e95019
