@@ -20,8 +20,7 @@ class DBQueries:
         # Connection to Database
         self.engine = create_engine("sqlite:///./twitterdb.db", echo=False)
         self._Session = sessionmaker(bind=self.engine)
-        self._session = self._Session()
-        self.session = self._session
+        self.session = self._Session()
 
     def topTweetId(self):
         return self.session.query(func.max(AccountTimeline.tweet_id)).one()

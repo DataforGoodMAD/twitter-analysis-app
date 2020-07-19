@@ -29,3 +29,11 @@ Setup instructions:
    ```
    chmod +x <filename>
    ```
+
+   \* _Windows_
+
+   If you are on Windows, you may have to install the data from nltk manually. On a bash command line, enter:
+
+   ```
+   python -m nltk.downloader wordnet stopwords
+   ```
