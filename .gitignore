@@ -137,3 +137,4 @@ tests
 *.spec
 build/
 dist/
+static
