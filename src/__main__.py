@@ -12,7 +12,7 @@ from src.features import (
     updateTokensCount,
 )
 from src.log_config import logger
-from src.settings import configCheck, firstTimeConfig
+from src.settings import configCheck
 from src.tw_miner import TwitterMiner
 from src.tw_processor import TwitterProcessor
 
