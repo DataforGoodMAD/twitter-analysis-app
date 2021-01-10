@@ -5,9 +5,9 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, func
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import relationship
 
-from src.db_models import AccountTimeline, TokensCount, Tweet, User
+from .models import AccountTimeline, TokensCount, Tweet, User
 
 load_dotenv()
 

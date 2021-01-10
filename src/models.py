@@ -1,11 +1,7 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.sqlite import DATETIME, BOOLEAN, INTEGER, VARCHAR, FLOAT
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy import create_engine
-
-engine = create_engine("sqlite:///./twitterdb.db", echo=True)
-Base = declarative_base(bind=engine)
+from .database import Base
 
 
 class AccountTimeline(Base):
@@ -23,7 +19,7 @@ class AccountTimeline(Base):
     favorite_count = Column(INTEGER)
 
 
-class TokensCount(Base):
+class Tokens(Base):
 
     __tablename__ = "tokens_count"
 
@@ -34,30 +30,7 @@ class TokensCount(Base):
     is_hashtag = Column(BOOLEAN)
     last_updated = Column(DATETIME)
 
-
-class User(Base):
-
-    __tablename__ = "users"
-
-    id = Column(INTEGER, primary_key=True)
-    screen_name = Column(VARCHAR(200))
-    location = Column(VARCHAR(200))
-    protected = Column(BOOLEAN)
-    followers_count = Column(INTEGER)
-    friends_count = Column(INTEGER)
-    created_at = Column(DATETIME)
-    favourites_count = Column(INTEGER)
-    statuses_count = Column(INTEGER)
-    default_profile_image = Column(BOOLEAN)
-    is_follower = Column(BOOLEAN, nullable=True)
-    is_friend = Column(BOOLEAN, nullable=True)
-    last_status = Column(DATETIME, nullable=True)
-    reviewed = Column(BOOLEAN)
-    similarity_score = Column(FLOAT, nullable=True)
-    tweets = relationship("Tweet", back_populates="user")
-
-
-class Tweet(Base):
+class Tweets(Base):
 
     __tablename__ = "tweets"
 
@@ -71,4 +44,29 @@ class Tweet(Base):
     retweet_count = Column(INTEGER)
     favorite_count = Column(INTEGER)
     similarity_score = Column(FLOAT, nullable=True)
-    user = relationship("User", back_populates="tweets")
+
+    user = relationship("Users", back_populates="tweets")
+
+class Users(Base):
+
+    __tablename__ = "users"
+
+    id = Column(INTEGER, primary_key=True)
+    screen_name = Column(VARCHAR(200))
+    location = Column(VARCHAR(200))
+    protected = Column(BOOLEAN)
+    followers_count = Column(INTEGER)
+    friends_count = Column(INTEGER)
+    created_at = Column(DATETIME)
+    # favourites_count = Column(INTEGER)
+    statuses_count = Column(INTEGER)
+    default_profile_image = Column(BOOLEAN)
+    is_follower = Column(BOOLEAN, nullable=True)
+    is_friend = Column(BOOLEAN, nullable=True)
+    last_status = Column(DATETIME, nullable=True)
+    reviewed = Column(BOOLEAN)
+    similarity_score = Column(FLOAT, nullable=True)
+
+    tweets = relationship("Tweets", back_populates="user")
+
+
