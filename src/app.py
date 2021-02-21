@@ -5,8 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 import uvicorn
 
-from src.api import api
-from src.database import SQLALCHEMY_DATABASE_URL, Base, engine
+from .api import api
+from .database import create_models
 
 app: FastAPI = FastAPI()
 
@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-Base.metadata.create_all(bind=engine)
+create_models()
 
 @app.get("/", include_in_schema=False)
 async def api_root():
