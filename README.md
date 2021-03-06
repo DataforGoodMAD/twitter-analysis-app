@@ -7,7 +7,13 @@ __Python__: This repository has been tested only for Python 3.7.x.
 Setup instructions:
 
 1. Clone this repo to your computer.
-2. Create a virtual environment using your favorite tool (Conda, Virtualenv...)
+2. Create a virtual environment using your favorite tool (Poetry, Conda, Virtualenv...). The easies way to do this is by doing:
+
+   ```
+   python -m venv env
+   source env/bin/activate
+   ```
+
 3. Within the environment, and from the root folder of the project, install the requirements by doing:
 
    ```
@@ -22,7 +28,7 @@ Setup instructions:
 5. Run the app.py in your terminal with:
 
    ```
-   python ./src/app.py
+   python ./app.py
    ```
 
    The first time you run the app, you'll have to input your Twitter API keys and the Username you want to config for the app. That information will be stored locally in a _.env_ file within the main folder of the project.
