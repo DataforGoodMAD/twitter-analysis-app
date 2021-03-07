@@ -1,10 +1,10 @@
-from src.log_config import logger
+from .log_config import logger
 import os
 
 import tweepy
 from dotenv import load_dotenv
 
-from src.db_queries import DBQueries
+from .db_queries import DBQueries
 
 load_dotenv()
 

@@ -9,7 +9,7 @@ import es_core_news_md  # spaCy pretrained model
 import nltk
 import spacy
 
-from src.log_config import logger
+from .log_config import logger
 
 try:
     from nltk.corpus import stopwords

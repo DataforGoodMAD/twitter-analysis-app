@@ -3,11 +3,11 @@ from statistics import mean
 import tweepy
 from dotenv import load_dotenv
 
-from src.db_models import Base
-from src.db_queries import DBQueries
-from src.tw_miner import TwitterMiner
-from src.tw_processor import TwitterProcessor
-from src.settings import configCheck, firstTimeConfig
+from .db_models import Base
+from .db_queries import DBQueries
+from .tw_miner import TwitterMiner
+from .tw_processor import TwitterProcessor
+from .local_config import config_check, firstTimeConfig
 
 load_dotenv()
 

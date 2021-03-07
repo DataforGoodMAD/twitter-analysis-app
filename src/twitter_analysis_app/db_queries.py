@@ -1,4 +1,4 @@
-from src.log_config import logger
+from .log_config import logger
 import os
 import re
 from datetime import datetime
@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import relationship, sessionmaker
 
-from src.db_models import AccountTimeline, TokensCount, Tweet, User
+from .db_models import AccountTimeline, TokensCount, Tweet, User
 
 load_dotenv()
 
