@@ -3,13 +3,27 @@ from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
 from .db_queries import DBQueries
 from twitter_analysis_app.local_config import config_check, verify_config, save_config
-from .db_models import AccountTimeline, TokensCount, Tweet, User
+from twitter_analysis_app.db_models import AccountTimeline, TokensCount, Tweet, User
 
 
 class TwitterAnalysisApp(toga.App):
     def __init__(self, db, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.db = db
+
+    # def action_show_dashboard_window(self, widget):
+    #     self.main_window.content = self.dashboard_main_box
+
+    def action_show_sim_users_window(self, widget):
+        self.sim_users_layout()
+        self.sim_users_window = toga.Window("Usuarios Afines")
+        self.sim_users_window.toolbar.add(
+            self.command_update_data,
+            self.command_find_similar_users,
+        )
+        self.sim_users_window.content = self.sim_users_main_box
+        self.sim_users_window.show()
+
 
     def action_update_data(self, widget):
         pass
@@ -22,39 +36,57 @@ class TwitterAnalysisApp(toga.App):
 
     def _get_similar_users(self):
         with self.db.get_session() as session:
-           sim_users = session.query(User).filter(User.similarity_score >= 0.75).all()
-        base_url = "https://twitter.com/"
-        data = [
-            (user.screen_name, user.similarity_score)
-            for user in sim_users
-        ]
+            sim_users = (
+                session.query(User)
+                .filter(User.similarity_score >= 0.75)
+                .order_by(User.similarity_score)
+                .all()
+            )
+        data = [(user.screen_name, user.similarity_score) for user in sim_users]
         return data
 
+    def _open_user_in_webview(self, table, row):
+        base_url = "https://twitter.com/"
+        self.webview.url = base_url + row.user
 
-
-    def main_box_layout(self):
-
-        self.main_box = toga.SplitContainer()
-
-        self.left_container = toga.Box(
-            style=Pack(direction=COLUMN),
+    def _build_sim_users_table(self):
+        sim_users_container = toga.Box(
+            style=Pack(direction=ROW),
         )
 
-        self.right_container = toga.ScrollContainer()
+        similar_users_data = self._get_similar_users()
 
-        similar_users = self._get_similar_users()
-
-        self.right_container = toga.Table(
+        sim_users_table = toga.Table(
             headings=["User", "Similarity Score"],
-            data=similar_users,
+            data=similar_users_data,
+            on_select=self._open_user_in_webview,
         )
 
-        webview_container = toga.WebView(style=Pack(flex=1))
-        self.left_container.add(webview_container)
+        sim_users_container.add(sim_users_table)
+        return sim_users_container
 
-        self.main_box.content = [self.right_container, self.left_container]
+    def _build_webview(self):
+        webview = toga.WebView(
+            style=Pack(
+                flex=1,
+                direction=COLUMN,
+            ),
+            url="https://twitter.com/home",
+        )
+        return webview
 
-        return self.main_box
+    def sim_users_layout(self):
+        self.sim_users_container = self._build_sim_users_table()
+        self.webview = self._build_webview()
+        self.sim_users_main_box = toga.SplitContainer(
+            direction=toga.SplitContainer.VERTICAL
+        )
+        self.sim_users_main_box.content = [self.sim_users_container, self.webview]
+        return self.sim_users_main_box
+
+    def dashboard_layout(self):
+        self.dashboard_main_box = toga.ScrollContainer()
+        return self.dashboard_main_box
 
     def main_window_layout(self):
         actions = toga.Group("Actions")
@@ -88,27 +120,39 @@ class TwitterAnalysisApp(toga.App):
             group=actions,
         )
 
-        self.dashboard_window = toga.Command(
-            action=self.action_find_similar_users,
-            label="Ver Dashboard",
+        # self.command_show_dashboard_window = toga.Command(
+        #     action=self.action_show_dashboard_window,
+        #     label="Dashboard",
+        #     tooltip="Actualiza Tweets, Seguidores y Amigos del usuario principal",
+        #     # shortcut=toga.Key.MOD_1 + "k",
+        #     icon=icon,
+        #     group=actions,
+        # )
+
+        self.command_show_sim_users_window = toga.Command(
+            action=self.action_show_sim_users_window,
+            label="Usuarios Afines",
             tooltip="Actualiza Tweets, Seguidores y Amigos del usuario principal",
             # shortcut=toga.Key.MOD_1 + "k",
             icon=icon,
             group=actions,
         )
 
-        self.commands.add(
-            self.command_update_config,
-            self.command_update_data,
-            self.command_find_similar_users,
-            self.dashboard_window,
-        )
+        # self.commands.add(
+        #     self.command_show_dashboard_window,
+        #     self.command_show_sim_users_window,
+        #     self.command_update_config,
+        #     self.command_update_data,
+        #     self.command_find_similar_users,
+        # )
 
         self.main_window = toga.MainWindow(
             title=self.formal_name,
         )
 
         self.main_window.toolbar.add(
+            # self.command_show_dashboard_window,
+            self.command_show_sim_users_window,
             self.command_update_config,
             self.command_update_data,
             self.command_find_similar_users,
@@ -186,9 +230,10 @@ class TwitterAnalysisApp(toga.App):
                 self.startup_config()
 
     def startup(self):
-        self.main_box_layout()
+        # self.sim_users_layout()
+        self.dashboard_layout()
         self.main_window_layout()
-        self.main_window.content = self.main_box
+        self.main_window.content = self.dashboard_main_box
         self.main_window.show()
         self.startup_config()
 

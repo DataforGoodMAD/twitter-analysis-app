@@ -213,14 +213,3 @@ class DBQueries:
 
     def getUser(self, user_id):
         return self.session.query(User).filter_by(id=user_id).first()
-
-
-if __name__ == "__main__":
-    q = DBQueries()
-    x = (
-        q.session.query(User)
-        .filter(User.similarity_score >= 0.7)
-        .order_by(User.similarity_score.desc())
-        .all()
-    )
-    print(f"Similar users: {[(i.screen_name, i.similarity_score) for i in x]}")
