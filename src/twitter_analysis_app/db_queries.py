@@ -2,6 +2,7 @@ from .log_config import logger
 import os
 import re
 from datetime import datetime
+from contextlib import contextmanager
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, func
@@ -19,8 +20,17 @@ class DBQueries:
 
         # Connection to Database
         self.engine = create_engine("sqlite:///./twitterdb.db", echo=False)
-        self._Session = sessionmaker(bind=self.engine)
-        self.session = self._Session()
+        self.SessionLocal = sessionmaker(bind=self.engine)
+        self.session = self.SessionLocal()
+
+    @contextmanager
+    def get_session(self):
+        db = self.SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
+
 
     def topTweetId(self):
         return self.session.query(func.max(AccountTimeline.tweet_id)).one()
