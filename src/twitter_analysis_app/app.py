@@ -1,6 +1,16 @@
 import toga
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
+
+from twitter_analysis_app.features import (
+    build_db_queries,
+    build_twitter_miner,
+    build_twitter_processor,
+    update_followers,
+    update_friends,
+    update_timeline,
+    update_tokens_count,
+)
 from .db_queries import DBQueries
 from twitter_analysis_app.local_config import config_check, verify_config, save_config
 from twitter_analysis_app.db_models import AccountTimeline, TokensCount, Tweet, User
@@ -9,30 +19,20 @@ from twitter_analysis_app.db_models import AccountTimeline, TokensCount, Tweet, 
 class TwitterAnalysisApp(toga.App):
     def __init__(self, db, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.db = db
+        self.twitter_consumer_key = (False,)
+        self.twitter_consumer_secret_key = (False,)
+        self.user_screen_name = (False,)
+        self.db = build_db_queries()
+        self.miner = build_twitter_miner()
+        self.processor = build_twitter_processor()
 
-    # def action_show_dashboard_window(self, widget):
-    #     self.main_window.content = self.dashboard_main_box
+    ##########
+    # Utils  #
+    ##########
 
-    def action_show_sim_users_window(self, widget):
-        self.sim_users_layout()
-        self.sim_users_window = toga.Window("Usuarios Afines")
-        self.sim_users_window.toolbar.add(
-            self.command_update_data,
-            self.command_find_similar_users,
-        )
-        self.sim_users_window.content = self.sim_users_main_box
-        self.sim_users_window.show()
-
-
-    def action_update_data(self, widget):
-        pass
-
-    def action_find_similar_users(self, widget):
-        pass
-
-    def action_update_config(self, widget):
-        return self.startup_config()
+    def _open_user_in_webview(self, table, row):
+        base_url = "https://twitter.com/"
+        self.webview.url = base_url + row.user
 
     def _get_similar_users(self):
         with self.db.get_session() as session:
@@ -45,14 +45,37 @@ class TwitterAnalysisApp(toga.App):
         data = [(user.screen_name, user.similarity_score) for user in sim_users]
         return data
 
-    def _open_user_in_webview(self, table, row):
-        base_url = "https://twitter.com/"
-        self.webview.url = base_url + row.user
+    ###########
+    # Actions #
+    ###########
 
-    def _build_sim_users_table(self):
-        sim_users_container = toga.Box(
-            style=Pack(direction=ROW),
-        )
+    def action_show_sim_users_window(self, widget):
+        self.similar_users_main_box = self._build_similar_users_layout()
+        self.sim_users_window = self._build_similar_users_window()
+        self.sim_users_window.content = self.similar_users_main_box
+        self.sim_users_window.show()
+
+    def action_update_data(self, widget):
+        #TODO: Refactorizar
+        p = self.processor
+        m = self.miner
+        d = self.db
+        update_timeline(p, d, m)
+        update_tokens_count(p, d)
+        update_followers(d, m, self.user_screen_name)
+        update_friends(p, d, m)
+
+    def action_find_similar_users(self, widget):
+        pass
+
+    def action_update_config(self, widget):
+        return self.startup_config()
+
+    ##########
+    # Builds #
+    ##########
+
+    def _build_similar_users_table(self):
 
         similar_users_data = self._get_similar_users()
 
@@ -60,6 +83,10 @@ class TwitterAnalysisApp(toga.App):
             headings=["User", "Similarity Score"],
             data=similar_users_data,
             on_select=self._open_user_in_webview,
+        )
+
+        sim_users_container = toga.Box(
+            style=Pack(direction=ROW),
         )
 
         sim_users_container.add(sim_users_table)
@@ -72,23 +99,32 @@ class TwitterAnalysisApp(toga.App):
                 direction=COLUMN,
             ),
             url="https://twitter.com/home",
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)\
+            AppleWebKit/537.36 (KHTML, like Gecko)\
+            Chrome/70.0.3538.77 Safari/537.36",
         )
         return webview
 
-    def sim_users_layout(self):
-        self.sim_users_container = self._build_sim_users_table()
+    def _build_similar_users_layout(self):
+        self.similar_users_container = self._build_similar_users_table()
         self.webview = self._build_webview()
-        self.sim_users_main_box = toga.SplitContainer(
-            direction=toga.SplitContainer.VERTICAL
+        sim_users_main_box = toga.SplitContainer(direction=toga.SplitContainer.VERTICAL)
+        sim_users_main_box.content = [self.similar_users_container, self.webview]
+        return sim_users_main_box
+
+    def _build_similar_users_window(self):
+        similar_users_window = toga.Window("Usuarios Afines")
+        similar_users_window.toolbar.add(
+            self.command_update_data,
+            self.command_find_similar_users,
         )
-        self.sim_users_main_box.content = [self.sim_users_container, self.webview]
-        return self.sim_users_main_box
+        return similar_users_window
 
-    def dashboard_layout(self):
-        self.dashboard_main_box = toga.ScrollContainer()
-        return self.dashboard_main_box
+    def _build_dashboard_layout(self):
+        dashboard_main_box = toga.ScrollContainer()
+        return dashboard_main_box
 
-    def main_window_layout(self):
+    def _build_main_window_layout(self):
         actions = toga.Group("Actions")
 
         icon = "resources/logo_dfg.png"
@@ -97,8 +133,6 @@ class TwitterAnalysisApp(toga.App):
             action=self.action_update_config,
             label="Actualizar Configuración",
             tooltip="Actualizar Configuración",
-            group=actions,
-            # shortcut=toga.Key.MOD_1 + "k",
             icon=icon,
         )
 
@@ -106,62 +140,39 @@ class TwitterAnalysisApp(toga.App):
             action=self.action_update_data,
             label="Actualizar Datos",
             tooltip="Actualiza Tweets, Seguidores y Amigos del usuario principal",
-            # shortcut=toga.Key.MOD_1 + "k",
             icon=icon,
-            group=actions,
         )
 
         self.command_find_similar_users = toga.Command(
             action=self.action_find_similar_users,
             label="Encontrar Usuarios Afines",
             tooltip="Actualiza Tweets, Seguidores y Amigos del usuario principal",
-            # shortcut=toga.Key.MOD_1 + "k",
             icon=icon,
-            group=actions,
         )
-
-        # self.command_show_dashboard_window = toga.Command(
-        #     action=self.action_show_dashboard_window,
-        #     label="Dashboard",
-        #     tooltip="Actualiza Tweets, Seguidores y Amigos del usuario principal",
-        #     # shortcut=toga.Key.MOD_1 + "k",
-        #     icon=icon,
-        #     group=actions,
-        # )
 
         self.command_show_sim_users_window = toga.Command(
             action=self.action_show_sim_users_window,
             label="Usuarios Afines",
             tooltip="Actualiza Tweets, Seguidores y Amigos del usuario principal",
-            # shortcut=toga.Key.MOD_1 + "k",
             icon=icon,
-            group=actions,
         )
 
-        # self.commands.add(
-        #     self.command_show_dashboard_window,
-        #     self.command_show_sim_users_window,
-        #     self.command_update_config,
-        #     self.command_update_data,
-        #     self.command_find_similar_users,
-        # )
-
-        self.main_window = toga.MainWindow(
+        main_window = toga.MainWindow(
             title=self.formal_name,
         )
 
-        self.main_window.toolbar.add(
-            # self.command_show_dashboard_window,
+        main_window.toolbar.add(
             self.command_show_sim_users_window,
             self.command_update_config,
             self.command_update_data,
             self.command_find_similar_users,
         )
-        return self.main_window
+        return main_window
 
     ##########
     # Config #
     ##########
+
     def startup_config(self):
         config_loaded = config_check()
         if not config_loaded:
@@ -229,10 +240,13 @@ class TwitterAnalysisApp(toga.App):
                 self.config_window.close()
                 self.startup_config()
 
+    ###########
+    # Startup #
+    ###########
+
     def startup(self):
-        # self.sim_users_layout()
-        self.dashboard_layout()
-        self.main_window_layout()
+        self.dashboard_main_box = self._build_dashboard_layout()
+        self.main_window = self._build_main_window_layout()
         self.main_window.content = self.dashboard_main_box
         self.main_window.show()
         self.startup_config()

@@ -1,18 +1,23 @@
 from statistics import mean
 
 import tweepy
-from dotenv import load_dotenv
 
-from .db_models import Base
 from .db_queries import DBQueries
 from .tw_miner import TwitterMiner
 from .tw_processor import TwitterProcessor
-from .local_config import config_check, firstTimeConfig
-
-load_dotenv()
 
 
-def updateTimeline(processor, queries, miner):
+def build_db_queries():
+    return DBQueries()
+
+def build_twitter_processor():
+    return TwitterProcessor()
+
+def build_twitter_miner():
+    return TwitterMiner()
+
+
+def update_timeline(processor, queries, miner):
     """Updates the account_timeline table with the latest tweets from the main user.
 
     Arguments:
@@ -37,7 +42,7 @@ def updateTimeline(processor, queries, miner):
     print("Update Timeline: Done")
 
 
-def updateTokensCount(processor, queries):
+def update_tokens_count(processor, queries):
     """Updates the tokens_count table with the latest tweets from the main user.
 
     Arguments:
@@ -50,7 +55,7 @@ def updateTokensCount(processor, queries):
     print("Update Tokens: Done")
 
 
-def updateFollowers(queries, miner, target_user):
+def update_followers(queries, miner, target_user):
 
     stored_users = queries.listUsers()
     cursor = miner.followersCursor(screen_name=target_user, limit=0)
@@ -71,7 +76,7 @@ def updateFollowers(queries, miner, target_user):
     print("Update Followers: Done")
 
 
-def updateFriends(queries, miner, target_user):
+def update_friends(queries, miner, target_user):
 
     stored_users = queries.listUsers()
     cursor = miner.friendsCursor(screen_name=target_user, limit=0)
@@ -92,7 +97,7 @@ def updateFriends(queries, miner, target_user):
     print("Update Friends: Done")
 
 
-def secondGradeSearch(miner, processor, queries):
+def second_grade_search(miner, processor, queries):
     not_reviewed_users = queries.getUsers(only_not_reviewed=True, only_followers=True)
     ref_docs = processor.toSpacyDocs(queries.getUserTweets(limit=50))
 
@@ -149,7 +154,3 @@ def secondGradeSearch(miner, processor, queries):
         print(f"Follower {follower.screen_name} reviewed.")
     queries.session.commit()
     print("Second Grade Search: Done")
-
-
-if __name__ == "__main__":
-    pass
