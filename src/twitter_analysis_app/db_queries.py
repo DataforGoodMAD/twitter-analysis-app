@@ -191,7 +191,7 @@ class DBQueries:
         )
 
     def listUsers(self):
-        return self.session.query(User.id, User.screen_name).all()
+        return self.session.query(User.id).all()
 
     def checkSecondGradeUser(self, user_tweepy):
         user_db = self.session.query(User).filter_by(id=user_tweepy.id).first()

@@ -7,13 +7,13 @@ from .tw_miner import TwitterMiner
 from .tw_processor import TwitterProcessor
 
 
-def build_db_queries():
+def new_db_queries():
     return DBQueries()
 
-def build_twitter_processor():
+def new_twitter_processor():
     return TwitterProcessor()
 
-def build_twitter_miner():
+def new_twitter_miner():
     return TwitterMiner()
 
 
@@ -62,7 +62,7 @@ def update_followers(queries, miner, target_user):
 
     user_objects_list = []
     for user in cursor:
-        if (user.id, user.screen_name) in stored_users:
+        if (user.id,) in stored_users:
             break
         else:
             user.is_friend = 1 if user.id in miner.friendsList else 0
@@ -83,7 +83,7 @@ def update_friends(queries, miner, target_user):
 
     user_objects_list = []
     for user in cursor:
-        if (user.id, user.screen_name) in stored_users:
+        if (user.id,) in stored_users:
             user = queries.getUser(user.id)
         user.is_friend = 1
         user.is_follower = 1 if user.id in miner.followersList else 0

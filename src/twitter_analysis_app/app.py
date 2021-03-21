@@ -3,9 +3,9 @@ from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
 
 from twitter_analysis_app.features import (
-    build_db_queries,
-    build_twitter_miner,
-    build_twitter_processor,
+    new_db_queries,
+    new_twitter_miner,
+    new_twitter_processor,
     update_followers,
     update_friends,
     update_timeline,
@@ -19,12 +19,12 @@ from twitter_analysis_app.db_models import AccountTimeline, TokensCount, Tweet, 
 class TwitterAnalysisApp(toga.App):
     def __init__(self, db, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.twitter_consumer_key = (False,)
-        self.twitter_consumer_secret_key = (False,)
-        self.user_screen_name = (False,)
-        self.db = build_db_queries()
-        self.miner = build_twitter_miner()
-        self.processor = build_twitter_processor()
+        # self.twitter_consumer_key = (False,)
+        # self.twitter_consumer_secret_key = (False,)
+        # self.user_screen_name = (False,)
+        self.db = new_db_queries()
+        self.miner = new_twitter_miner()
+        self.processor = new_twitter_processor()
 
     ##########
     # Utils  #
@@ -62,8 +62,9 @@ class TwitterAnalysisApp(toga.App):
         d = self.db
         update_timeline(p, d, m)
         update_tokens_count(p, d)
-        update_followers(d, m, self.user_screen_name)
-        update_friends(p, d, m)
+        update_followers(d, m, m.username)
+        update_friends(d, m, m.username)
+
 
     def action_find_similar_users(self, widget):
         pass
@@ -79,18 +80,18 @@ class TwitterAnalysisApp(toga.App):
 
         similar_users_data = self._get_similar_users()
 
-        sim_users_table = toga.Table(
+        similar_users_table = toga.Table(
             headings=["User", "Similarity Score"],
             data=similar_users_data,
             on_select=self._open_user_in_webview,
         )
 
-        sim_users_container = toga.Box(
+        similar_users_container = toga.Box(
             style=Pack(direction=ROW),
         )
 
-        sim_users_container.add(sim_users_table)
-        return sim_users_container
+        similar_users_container.add(similar_users_table)
+        return similar_users_container
 
     def _build_webview(self):
         webview = toga.WebView(
@@ -125,8 +126,6 @@ class TwitterAnalysisApp(toga.App):
         return dashboard_main_box
 
     def _build_main_window_layout(self):
-        actions = toga.Group("Actions")
-
         icon = "resources/logo_dfg.png"
 
         self.command_update_config = toga.Command(
