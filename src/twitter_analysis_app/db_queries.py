@@ -217,11 +217,12 @@ class DBQueries:
     def getUser(self, user_id):
         return self.session.query(User).filter_by(id=user_id).first()
 
-    def _get_similar_users(self):
+    def _get_similar_users(self, hidden=False):
         with self.get_session() as session:
             sim_users = (
                 session.query(User)
-                .filter(User.similarity_score >= 0.75)
+                .filter(User.similarity_score >= 0.75,
+                        User.hidden == hidden)
                 .order_by(User.similarity_score)
                 .all()
             )

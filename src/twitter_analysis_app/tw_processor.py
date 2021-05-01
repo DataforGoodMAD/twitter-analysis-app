@@ -34,7 +34,8 @@ class TwitterProcessor:
         self.__popCounter = popcounter
         self.lemmatizer = lemmatizer
         self.punctuation = "¡!\"$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
-        self.stopWords = set(stopwords.words("spanish") + stopwords.words("english"))
+        self.stopWords = set(stopwords.words(
+            "spanish") + stopwords.words("english"))
         print("loading spaCy model: es_core_news_md")
         self.nlp = es_core_news_md.load()
 
@@ -118,7 +119,8 @@ class TwitterProcessor:
             warnings.filterwarnings("ignore")
             for tweet in tweet_list:
                 if tweet.display_text_range != "[0,0]":
-                    tweet_tokenized = " ".join(self.tweetTokenizer(tweet.full_text))
+                    tweet_tokenized = " ".join(
+                        self.tweetTokenizer(tweet.full_text))
                     spacy_doc = self.nlp.make_doc(tweet_tokenized)
                     tweet.similarity = round(
                         mean(
@@ -140,12 +142,3 @@ class TwitterProcessor:
         ):
             return True
         return False
-
-
-if __name__ == "__main__":
-    p = TwitterProcessor()
-    lst = ["x", "y", "z"]
-    p.counter.update(lst)
-    print(len(p.counter))
-    p.popCounter.update(lst * int((3 + (2 * 0.3))))
-    print(len(p.popCounter))

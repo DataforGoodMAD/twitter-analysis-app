@@ -100,7 +100,8 @@ class TwitterAnalysisFeatures():
                         not user
                         # Check with Twitter
                         or self.miner.reviewFriendFollower(user) == False
-                        or self.db.isActive(user) == False  # Check activity
+                        # Check activity
+                        or self.processor.isActive(user) == False
                     ):
                         continue
                     else:

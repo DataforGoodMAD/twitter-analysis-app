@@ -12,6 +12,45 @@ class TwitterAnalysisApp(toga.App):
         super().__init__(*args, **kwargs)
         self.app = TwitterAnalysisFeatures()
 
+        icon = "resources/logo_dfg.png"
+
+        self.command_update_config = toga.Command(
+            action=self.action_update_config,
+            label="Actualizar Configuración",
+            tooltip="Actualizar Configuración",
+            icon=icon,
+        )
+
+        self.command_update_data = toga.Command(
+            action=self.action_update_data,
+            label="Actualizar Datos",
+            tooltip="Actualiza Tweets, Seguidores y Amigos del usuario principal",
+            icon=icon,
+        )
+
+        self.command_find_similar_users = toga.Command(
+            action=self.action_find_similar_users,
+            label="Encontrar Usuarios Afines",
+            tooltip="""
+                Actualiza Tweets, Seguidores y Amigos del usuario principal
+            """,
+            icon=icon,
+        )
+
+        self.command_show_sim_users_window = toga.Command(
+            action=self.action_show_users_window,
+            label="Usuarios Afines",
+            tooltip="Actualiza Tweets, Seguidores y Amigos del usuario principal",
+            icon=icon,
+        )
+
+        self.command_show_hidden_users = toga.Command(
+            action=self.action_show_hidden_users,
+            label="Usuarios Afines",
+            tooltip="Actualiza Tweets, Seguidores y Amigos del usuario principal",
+            icon=icon,
+        )
+
     ##########
     # Utils  #
     ##########
@@ -24,20 +63,29 @@ class TwitterAnalysisApp(toga.App):
     # Actions #
     ###########
 
-    def action_show_sim_users_window(self, widget):
-        self.similar_users_main_box = self._build_similar_users_layout()
+    def action_show_users_window(self, widget):
+        self.similar_users_main_box = self._build_users_layout()
         self.sim_users_window = self._build_similar_users_window()
         self.sim_users_window.content = self.similar_users_main_box
         self.sim_users_window.show()
 
+    def action_show_hidden_users(self, widget):
+        if not self.sim_users_window:
+            return False
+        hidden_users = self.app.db._get_similar_users(hidden=True)
+        self.sim_users_window.content = hidden_users
+
     def action_update_data(self, widget):
+        spinner = toga.ActivityIndicator()
+        spinner.start()
         self.app.update_timeline()
         self.app.update_tokens_count()
-        self.app.update_followers()
-        self.app.update_friends()
+        self.app.update_followers(self.app.miner.username)
+        self.app.update_friends(self.app.miner.username)
+        spinner.stop()
 
     def action_find_similar_users(self, widget):
-        pass
+        return self.app.second_grade_search()
 
     def action_update_config(self, widget):
         return self.startup_config()
@@ -46,9 +94,9 @@ class TwitterAnalysisApp(toga.App):
     # Builds #
     ##########
 
-    def _build_similar_users_table(self):
+    def _build_users_table(self):
 
-        similar_users_data = self.app._get_similar_users()
+        similar_users_data = self.app.db._get_similar_users()
 
         similar_users_table = toga.Table(
             headings=[
@@ -83,8 +131,8 @@ class TwitterAnalysisApp(toga.App):
         )
         return webview
 
-    def _build_similar_users_layout(self):
-        self.similar_users_container = self._build_similar_users_table()
+    def _build_users_layout(self):
+        self.users_table = self._build_users_table()
         self.webview = self._build_webview()
         sim_users_main_box = toga.SplitContainer(
             direction=toga.SplitContainer.VERTICAL,
@@ -94,7 +142,7 @@ class TwitterAnalysisApp(toga.App):
             ),
         )
         sim_users_main_box.content = [
-            (self.similar_users_container, 1),
+            (self.users_table, 1),
             (self.webview, 9),
         ]
         return sim_users_main_box
@@ -104,50 +152,14 @@ class TwitterAnalysisApp(toga.App):
         similar_users_window.toolbar.add(
             self.command_update_data,
             self.command_find_similar_users,
+            self.command_show_hidden_users,
         )
         return similar_users_window
 
-    def _build_dashboard_layout(self):
-        dashboard_main_box = toga.ScrollContainer()
-        return dashboard_main_box
-
     def _build_main_window_layout(self):
-        icon = "resources/logo_dfg.png"
-
-        self.command_update_config = toga.Command(
-            action=self.action_update_config,
-            label="Actualizar Configuración",
-            tooltip="Actualizar Configuración",
-            icon=icon,
-        )
-
-        self.command_update_data = toga.Command(
-            action=self.action_update_data,
-            label="Actualizar Datos",
-            tooltip="Actualiza Tweets, Seguidores y Amigos del usuario principal",
-            icon=icon,
-        )
-
-        self.command_find_similar_users = toga.Command(
-            action=self.action_find_similar_users,
-            label="Encontrar Usuarios Afines",
-            tooltip="""
-                Actualiza Tweets, Seguidores y Amigos del usuario principal
-            """,
-            icon=icon,
-        )
-
-        self.command_show_sim_users_window = toga.Command(
-            action=self.action_show_sim_users_window,
-            label="Usuarios Afines",
-            tooltip="Actualiza Tweets, Seguidores y Amigos del usuario principal",
-            icon=icon,
-        )
-
         main_window = toga.MainWindow(
             title=self.formal_name,
         )
-
         main_window.toolbar.add(
             self.command_show_sim_users_window,
             self.command_update_config,
@@ -155,6 +167,10 @@ class TwitterAnalysisApp(toga.App):
             self.command_find_similar_users,
         )
         return main_window
+
+    def _build_dashboard_layout(self):
+        dashboard_main_box = toga.ScrollContainer()
+        return dashboard_main_box
 
     ##########
     # Config #
