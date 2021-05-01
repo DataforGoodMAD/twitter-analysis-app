@@ -31,7 +31,6 @@ class DBQueries:
         finally:
             db.close()
 
-
     def topTweetId(self):
         return self.session.query(func.max(AccountTimeline.tweet_id)).one()
 
@@ -56,7 +55,8 @@ class DBQueries:
                     list(
                         map(
                             lambda hashtag: hashtag["text"],
-                            status._json.get("entities", None).get("hashtags", None),
+                            status._json.get("entities", None).get(
+                                "hashtags", None),
                         )
                     )
                 ),
@@ -70,7 +70,8 @@ class DBQueries:
                 tweet_object = AccountTimeline(**params)
             else:
                 params["similarity_score"] = (
-                    status.similarity if hasattr(status, "similarity") else None
+                    status.similarity if hasattr(
+                        status, "similarity") else None
                 )
                 tweet_object = Tweet(**params)
 
@@ -88,13 +89,15 @@ class DBQueries:
         keys = counter.elements()  # List of Tokens
 
         tokens_query = (
-            self.session.query(TokensCount).filter(TokensCount.token.in_(keys)).all()
+            self.session.query(TokensCount).filter(
+                TokensCount.token.in_(keys)).all()
         )
 
         for token_object in tokens_query:
             if token_object.token in keys:
                 token_object.cumulated_count += counter.get(token_object.token)
-                token_object.popularity_count += popCounter.get(token_object.token)
+                token_object.popularity_count += popCounter.get(
+                    token_object.token)
                 token_object.last_updated = datetime.now()
                 del counter[token_object.token]
 
@@ -213,3 +216,22 @@ class DBQueries:
 
     def getUser(self, user_id):
         return self.session.query(User).filter_by(id=user_id).first()
+
+    def _get_similar_users(self):
+        with self.get_session() as session:
+            sim_users = (
+                session.query(User)
+                .filter(User.similarity_score >= 0.75)
+                .order_by(User.similarity_score)
+                .all()
+            )
+        data = [(
+            user.screen_name,
+            user.followers_count,
+            user.statuses_count,
+            datetime.strftime(user.last_status, '%d/%m/%y'),
+            user.similarity_score,
+
+        )
+            for user in sim_users]
+        return data

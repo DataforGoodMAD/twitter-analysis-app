@@ -8,7 +8,7 @@ def config_check():
     load_dotenv()
     keys = ["CONSUMER_KEY", "CONSUMER_SECRET_KEY", "USER_SCREEN_NAME"]
     if all([dotenv_values().get(key, None) for key in keys]):
-        print("Welcome back! Let's go!")
+        # print("Welcome back! Let's go!")
         return True
     return False
     # else:
