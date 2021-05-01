@@ -1,11 +1,12 @@
 import toga
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
+from datetime import datetime
 
 from twitter_analysis_app.features import (
-    new_db_queries,
-    new_twitter_miner,
-    new_twitter_processor,
+    build_db_queries,
+    build_twitter_miner,
+    build_twitter_processor,
     update_followers,
     update_friends,
     update_timeline,
@@ -17,14 +18,14 @@ from twitter_analysis_app.db_models import AccountTimeline, TokensCount, Tweet, 
 
 
 class TwitterAnalysisApp(toga.App):
-    def __init__(self, db, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # self.twitter_consumer_key = (False,)
         # self.twitter_consumer_secret_key = (False,)
         # self.user_screen_name = (False,)
-        self.db = new_db_queries()
-        self.miner = new_twitter_miner()
-        self.processor = new_twitter_processor()
+        self.db = build_db_queries()
+        self.miner = build_twitter_miner()
+        self.processor = build_twitter_processor()
 
     ##########
     # Utils  #
@@ -32,7 +33,7 @@ class TwitterAnalysisApp(toga.App):
 
     def _open_user_in_webview(self, table, row):
         base_url = "https://twitter.com/"
-        self.webview.url = base_url + row.user
+        self.webview.url = base_url + row.usuario
 
     def _get_similar_users(self):
         with self.db.get_session() as session:
@@ -42,7 +43,15 @@ class TwitterAnalysisApp(toga.App):
                 .order_by(User.similarity_score)
                 .all()
             )
-        data = [(user.screen_name, user.similarity_score) for user in sim_users]
+        data = [(
+            user.screen_name,
+            user.followers_count,
+            user.statuses_count,
+            datetime.strftime(user.last_status, '%d/%m/%y'),
+            user.similarity_score,
+
+        )
+            for user in sim_users]
         return data
 
     ###########
@@ -56,7 +65,7 @@ class TwitterAnalysisApp(toga.App):
         self.sim_users_window.show()
 
     def action_update_data(self, widget):
-        #TODO: Refactorizar
+        # TODO: Refactorizar
         p = self.processor
         m = self.miner
         d = self.db
@@ -64,7 +73,6 @@ class TwitterAnalysisApp(toga.App):
         update_tokens_count(p, d)
         update_followers(d, m, m.username)
         update_friends(d, m, m.username)
-
 
     def action_find_similar_users(self, widget):
         pass
@@ -81,13 +89,21 @@ class TwitterAnalysisApp(toga.App):
         similar_users_data = self._get_similar_users()
 
         similar_users_table = toga.Table(
-            headings=["User", "Similarity Score"],
+            headings=[
+                "Usuario",
+                "Seguidores",
+                "Tweets",
+                "Último Tweet",
+                "Afinidad"
+            ],
             data=similar_users_data,
             on_select=self._open_user_in_webview,
         )
 
         similar_users_container = toga.Box(
-            style=Pack(direction=ROW),
+            style=Pack(
+                direction=ROW,
+            ),
         )
 
         similar_users_container.add(similar_users_table)
@@ -96,8 +112,7 @@ class TwitterAnalysisApp(toga.App):
     def _build_webview(self):
         webview = toga.WebView(
             style=Pack(
-                flex=1,
-                direction=COLUMN,
+                direction=ROW,
             ),
             url="https://twitter.com/home",
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)\
@@ -109,8 +124,17 @@ class TwitterAnalysisApp(toga.App):
     def _build_similar_users_layout(self):
         self.similar_users_container = self._build_similar_users_table()
         self.webview = self._build_webview()
-        sim_users_main_box = toga.SplitContainer(direction=toga.SplitContainer.VERTICAL)
-        sim_users_main_box.content = [self.similar_users_container, self.webview]
+        sim_users_main_box = toga.SplitContainer(
+            direction=toga.SplitContainer.VERTICAL,
+            style=Pack(
+                direction=ROW,
+                flex=1,
+            ),
+        )
+        sim_users_main_box.content = [
+            (self.similar_users_container, 1),
+            (self.webview, 9),
+        ]
         return sim_users_main_box
 
     def _build_similar_users_window(self):
@@ -176,19 +200,44 @@ class TwitterAnalysisApp(toga.App):
         config_loaded = config_check()
         if not config_loaded:
 
-            input_params_box = toga.Box(style=Pack(direction=ROW, padding=5))
+            input_params_box = toga.Box(
+                style=Pack(
+                    direction=ROW,
+                    padding=5,
+                ),
+            )
             twitter_consumer_key_label = toga.Label(
-                "Twitter Consumer Key: ", style=Pack(padding=(5, 5))
+                "Twitter Consumer Key: ",
+                style=Pack(
+                    padding=(5, 5),
+                ),
             )
-            self.twitter_consumer_key = toga.TextInput(style=Pack(flex=1))
+            self.twitter_consumer_key = toga.TextInput(
+                style=Pack(
+                    flex=1,
+                ),
+            )
             twitter_consumer_secret_key_label = toga.Label(
-                "Twitter Consumer Secret Key: ", style=Pack(padding=(5, 5))
+                "Twitter Consumer Secret Key: ",
+                style=Pack(
+                    padding=(5, 5),
+                ),
             )
-            self.twitter_consumer_secret_key = toga.TextInput(style=Pack(flex=1))
+            self.twitter_consumer_secret_key = toga.TextInput(
+                style=Pack(
+                    flex=1,
+                ),
+            )
             user_screen_name_label = toga.Label(
-                "Twitter Username: ", style=Pack(padding=(5, 5))
+                "Twitter Username: ", style=Pack(
+                    padding=(5, 5),
+                ),
             )
-            self.user_screen_name = toga.TextInput(style=Pack(flex=1))
+            self.user_screen_name = toga.TextInput(
+                style=Pack(
+                    flex=1,
+                ),
+            )
 
             input_params_box.add(
                 twitter_consumer_key_label,
@@ -199,9 +248,16 @@ class TwitterAnalysisApp(toga.App):
                 self.user_screen_name,
             )
 
-            confirmation_button_box = toga.Box(style=Pack(direction=ROW, padding=5))
+            confirmation_button_box = toga.Box(
+                style=Pack(
+                    direction=ROW,
+                    padding=5,
+                ),
+            )
             confirmation_button = toga.Button(
-                "Confirmar", on_press=self.confirm_config_params, style=Pack(padding=50)
+                "Confirmar",
+                on_press=self.confirm_config_params,
+                style=Pack(padding=50)
             )
             confirmation_button_box.add(confirmation_button)
 
@@ -252,5 +308,4 @@ class TwitterAnalysisApp(toga.App):
 
 
 def main():
-    db = DBQueries()
-    return TwitterAnalysisApp(db)
+    return TwitterAnalysisApp()

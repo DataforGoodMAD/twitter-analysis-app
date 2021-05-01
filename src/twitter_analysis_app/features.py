@@ -7,13 +7,15 @@ from .tw_miner import TwitterMiner
 from .tw_processor import TwitterProcessor
 
 
-def new_db_queries():
+def build_db_queries():
     return DBQueries()
 
-def new_twitter_processor():
+
+def build_twitter_processor():
     return TwitterProcessor()
 
-def new_twitter_miner():
+
+def build_twitter_miner():
     return TwitterMiner()
 
 
@@ -35,7 +37,8 @@ def update_timeline(processor, queries, miner):
             tokens_list = processor.tweetTokenizer(tweet.full_text)
             processor.updateCounter(tokens_list)
             processor.updatepopCounter(
-                tokens_list * int(((tweet.retweet_count * 3) + tweet.favorite_count))
+                tokens_list *
+                int(((tweet.retweet_count * 3) + tweet.favorite_count))
             )
 
     queries.session.commit()
@@ -49,7 +52,8 @@ def update_tokens_count(processor, queries):
         processor {[TwitterProcessor object]} -- [instance from the local class defined at tw_processor.py]
         queries {[DBQueries object]} -- [instance from the local class defined at tw_processor.py]
     """
-    token_object_list = queries.tokenstoDB(processor.counter, processor.popCounter)
+    token_object_list = queries.tokenstoDB(
+        processor.counter, processor.popCounter)
     queries.session.add_all(token_object_list)
     queries.session.commit()
     print("Update Tokens: Done")
@@ -98,11 +102,13 @@ def update_friends(queries, miner, target_user):
 
 
 def second_grade_search(miner, processor, queries):
-    not_reviewed_users = queries.getUsers(only_not_reviewed=True, only_followers=True)
+    not_reviewed_users = queries.getUsers(
+        only_not_reviewed=True, only_followers=True)
     ref_docs = processor.toSpacyDocs(queries.getUserTweets(limit=50))
 
     for follower in not_reviewed_users:
-        cursor = miner.followersCursor(screen_name=follower.screen_name, limit=0)
+        cursor = miner.followersCursor(
+            screen_name=follower.screen_name, limit=0)
         reviewed_counter = 0
         if follower.followers_count >= 3200 and reviewed_counter == 0:
             follower.reviewed = 1
@@ -113,7 +119,8 @@ def second_grade_search(miner, processor, queries):
                 user = queries.checkSecondGradeUser(user)  # Check user on db
                 if (
                     not user
-                    or miner.reviewFriendFollower(user) == False  # Check with Twitter
+                    # Check with Twitter
+                    or miner.reviewFriendFollower(user) == False
                     or processor.isActive(user) == False  # Check activity
                 ):
                     continue
