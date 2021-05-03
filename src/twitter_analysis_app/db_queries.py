@@ -136,6 +136,7 @@ class DBQueries:
                     user.status.created_at if hasattr(user, "status") else None
                 ),
                 "reviewed": 0,
+                "hidden": 0,
                 "similarity_score": (
                     user.similarity if hasattr(user, "similarity") else None
                 ),
@@ -202,7 +203,7 @@ class DBQueries:
             user_db
             and user_db.is_follower == 0
             and user_db.is_friend == 0
-            and user_db.similarity_score == None
+            and user_db.similarity_score is None
         ):
             return user_db
         elif user_db:
@@ -217,22 +218,29 @@ class DBQueries:
     def getUser(self, user_id):
         return self.session.query(User).filter_by(id=user_id).first()
 
-    def _get_similar_users(self, hidden=False):
+    def get_similar_users(self, hidden=False):
         with self.get_session() as session:
             sim_users = (
                 session.query(User)
-                .filter(User.similarity_score >= 0.75,
-                        User.hidden == hidden)
-                .order_by(User.similarity_score)
+                .filter(
+                    User.similarity_score >= 0.75,
+                    User.hidden == hidden
+                )
+                .order_by(
+                    User.similarity_score.desc(),
+                )
                 .all()
             )
-        data = [(
-            user.screen_name,
-            user.followers_count,
-            user.statuses_count,
-            datetime.strftime(user.last_status, '%d/%m/%y'),
-            user.similarity_score,
-
-        )
+        data = [
+            [
+                user.screen_name,
+                user.followers_count,
+                user.statuses_count,
+                datetime.strftime(user.last_status, '%d/%m/%y'),
+                user.similarity_score,
+            ]
             for user in sim_users]
         return data
+
+    def hide_user(user_id):
+        pass

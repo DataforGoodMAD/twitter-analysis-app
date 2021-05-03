@@ -1,5 +1,7 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy.dialects.sqlite import DATETIME, BOOLEAN, INTEGER, VARCHAR, FLOAT
+from sqlalchemy.dialects.sqlite import (
+    DATETIME, BOOLEAN, INTEGER, VARCHAR, FLOAT
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
