@@ -1,13 +1,14 @@
-from src.log_config import logger
+from .log_config import logger
 import os
 import re
 from datetime import datetime
+from contextlib import contextmanager
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import relationship, sessionmaker
 
-from src.db_models import AccountTimeline, TokensCount, Tweet, User
+from .db_models import AccountTimeline, TokensCount, Tweet, User
 
 load_dotenv()
 
@@ -19,8 +20,16 @@ class DBQueries:
 
         # Connection to Database
         self.engine = create_engine("sqlite:///./twitterdb.db", echo=False)
-        self._Session = sessionmaker(bind=self.engine)
-        self.session = self._Session()
+        self.SessionLocal = sessionmaker(bind=self.engine)
+        self.session = self.SessionLocal()
+
+    @contextmanager
+    def get_session(self):
+        db = self.SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
 
     def topTweetId(self):
         return self.session.query(func.max(AccountTimeline.tweet_id)).one()
@@ -46,7 +55,8 @@ class DBQueries:
                     list(
                         map(
                             lambda hashtag: hashtag["text"],
-                            status._json.get("entities", None).get("hashtags", None),
+                            status._json.get("entities", None).get(
+                                "hashtags", None),
                         )
                     )
                 ),
@@ -60,7 +70,8 @@ class DBQueries:
                 tweet_object = AccountTimeline(**params)
             else:
                 params["similarity_score"] = (
-                    status.similarity if hasattr(status, "similarity") else None
+                    status.similarity if hasattr(
+                        status, "similarity") else None
                 )
                 tweet_object = Tweet(**params)
 
@@ -78,13 +89,15 @@ class DBQueries:
         keys = counter.elements()  # List of Tokens
 
         tokens_query = (
-            self.session.query(TokensCount).filter(TokensCount.token.in_(keys)).all()
+            self.session.query(TokensCount).filter(
+                TokensCount.token.in_(keys)).all()
         )
 
         for token_object in tokens_query:
             if token_object.token in keys:
                 token_object.cumulated_count += counter.get(token_object.token)
-                token_object.popularity_count += popCounter.get(token_object.token)
+                token_object.popularity_count += popCounter.get(
+                    token_object.token)
                 token_object.last_updated = datetime.now()
                 del counter[token_object.token]
 
@@ -123,6 +136,7 @@ class DBQueries:
                     user.status.created_at if hasattr(user, "status") else None
                 ),
                 "reviewed": 0,
+                "hidden": 0,
                 "similarity_score": (
                     user.similarity if hasattr(user, "similarity") else None
                 ),
@@ -181,7 +195,7 @@ class DBQueries:
         )
 
     def listUsers(self):
-        return self.session.query(User.id, User.screen_name).all()
+        return self.session.query(User.id).all()
 
     def checkSecondGradeUser(self, user_tweepy):
         user_db = self.session.query(User).filter_by(id=user_tweepy.id).first()
@@ -189,7 +203,7 @@ class DBQueries:
             user_db
             and user_db.is_follower == 0
             and user_db.is_friend == 0
-            and user_db.similarity_score == None
+            and user_db.similarity_score is None
         ):
             return user_db
         elif user_db:
@@ -204,13 +218,29 @@ class DBQueries:
     def getUser(self, user_id):
         return self.session.query(User).filter_by(id=user_id).first()
 
+    def get_similar_users(self, hidden=False):
+        with self.get_session() as session:
+            sim_users = (
+                session.query(User)
+                .filter(
+                    User.similarity_score >= 0.75,
+                    User.hidden == hidden
+                )
+                .order_by(
+                    User.similarity_score.desc(),
+                )
+                .all()
+            )
+        data = [
+            [
+                user.screen_name,
+                user.followers_count,
+                user.statuses_count,
+                datetime.strftime(user.last_status, '%d/%m/%y'),
+                user.similarity_score,
+            ]
+            for user in sim_users]
+        return data
 
-if __name__ == "__main__":
-    q = DBQueries()
-    x = (
-        q.session.query(User)
-        .filter(User.similarity_score >= 0.7)
-        .order_by(User.similarity_score.desc())
-        .all()
-    )
-    print(f"Similar users: {[(i.screen_name, i.similarity_score) for i in x]}")
+    def hide_user(user_id):
+        pass

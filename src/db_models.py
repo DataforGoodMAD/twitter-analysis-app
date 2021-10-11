@@ -1,5 +1,7 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy.dialects.sqlite import DATETIME, BOOLEAN, INTEGER, VARCHAR, FLOAT
+from sqlalchemy.dialects.sqlite import (
+    DATETIME, BOOLEAN, INTEGER, VARCHAR, FLOAT
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
@@ -53,6 +55,7 @@ class User(Base):
     is_friend = Column(BOOLEAN, nullable=True)
     last_status = Column(DATETIME, nullable=True)
     reviewed = Column(BOOLEAN)
+    hidden = Column(BOOLEAN)
     similarity_score = Column(FLOAT, nullable=True)
     tweets = relationship("Tweet", back_populates="user")
 
