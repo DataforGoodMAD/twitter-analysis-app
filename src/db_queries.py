@@ -1,14 +1,17 @@
-from .log_config import logger
+from contextlib import contextmanager
+from datetime import datetime
+from datetime import datetime
+import csv
 import os
 import re
-from datetime import datetime
-from contextlib import contextmanager
 
 from dotenv import load_dotenv
+
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import relationship, sessionmaker
 
-from .db_models import AccountTimeline, TokensCount, Tweet, User
+from src.db_models import Base, AccountTimeline, TokensCount, Tweet, User
+from src.log_config import logger
 
 load_dotenv()
 
@@ -22,6 +25,11 @@ class DBQueries:
         self.engine = create_engine("sqlite:///./twitterdb.db", echo=False)
         self.SessionLocal = sessionmaker(bind=self.engine)
         self.session = self.SessionLocal()
+        self._base = Base
+
+    def create_tables(self):
+        logger.info(self._base.metadata.create_all())
+        print("Database Loaded.")
 
     @contextmanager
     def get_session(self):
@@ -56,7 +64,8 @@ class DBQueries:
                         map(
                             lambda hashtag: hashtag["text"],
                             status._json.get("entities", None).get(
-                                "hashtags", None),
+                                "hashtags", None
+                            ),
                         )
                     )
                 ),
@@ -70,8 +79,9 @@ class DBQueries:
                 tweet_object = AccountTimeline(**params)
             else:
                 params["similarity_score"] = (
-                    status.similarity if hasattr(
-                        status, "similarity") else None
+                    status.similarity
+                    if hasattr(status, "similarity")
+                    else None
                 )
                 tweet_object = Tweet(**params)
 
@@ -89,15 +99,17 @@ class DBQueries:
         keys = counter.elements()  # List of Tokens
 
         tokens_query = (
-            self.session.query(TokensCount).filter(
-                TokensCount.token.in_(keys)).all()
+            self.session.query(TokensCount)
+            .filter(TokensCount.token.in_(keys))
+            .all()
         )
 
         for token_object in tokens_query:
             if token_object.token in keys:
                 token_object.cumulated_count += counter.get(token_object.token)
                 token_object.popularity_count += popCounter.get(
-                    token_object.token)
+                    token_object.token
+                )
                 token_object.last_updated = datetime.now()
                 del counter[token_object.token]
 
@@ -162,7 +174,10 @@ class DBQueries:
         return eval(query)
 
     def getUserTweets(
-        self, limit=50, order_by=AccountTimeline.created_at.desc(), with_text=True
+        self,
+        limit=50,
+        order_by=AccountTimeline.created_at.desc(),
+        with_text=True,
     ):
         if with_text:
             return (
@@ -222,10 +237,7 @@ class DBQueries:
         with self.get_session() as session:
             sim_users = (
                 session.query(User)
-                .filter(
-                    User.similarity_score >= 0.75,
-                    User.hidden == hidden
-                )
+                .filter(User.similarity_score >= 0.75, User.hidden == hidden)
                 .order_by(
                     User.similarity_score.desc(),
                 )
@@ -236,11 +248,28 @@ class DBQueries:
                 user.screen_name,
                 user.followers_count,
                 user.statuses_count,
-                datetime.strftime(user.last_status, '%d/%m/%y'),
+                datetime.strftime(user.last_status, "%d/%m/%y"),
                 user.similarity_score,
             ]
-            for user in sim_users]
+            for user in sim_users
+        ]
         return data
 
-    def hide_user(user_id):
-        pass
+    def _export_table_to_csv(self, table):
+        with open(f"./{table.__tablename__}.csv", "w") as file:
+            records = self.session.query(table).all()
+            csv_writer = csv.writer(file, delimiter=",")
+            output = [
+                csv_writer.writerow(
+                    [
+                        getattr(curr, column.name)
+                        for column in table.__mapper__.columns
+                    ]
+                )
+                for curr in records
+            ]
+
+    @property
+    def tables(self):
+        # FIXME: get models dinamically
+        return [AccountTimeline, TokensCount, Tweet, User]

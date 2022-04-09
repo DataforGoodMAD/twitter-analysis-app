@@ -5,7 +5,7 @@ from .log_config import logger
 
 
 class AppConfig:
-    def setup():
+    def setup(self):
         while True:
             consumer_key = input('Please enter your Twitter "CONSUMER_KEY":')
             consumer_secret_key = input(
@@ -53,7 +53,7 @@ class AppConfig:
             print("Welcome back! Let's go!")
             return True
         else:
-            return setup()
+            return self.setup()
 
 
 def load_config():

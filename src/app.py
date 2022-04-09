@@ -2,9 +2,9 @@ from statistics import mean
 
 import tweepy
 
-from .db_queries import DBQueries
-from .tw_miner import TwitterMiner
-from .tw_processor import TwitterProcessor
+from src.db_queries import DBQueries
+from src.tw_miner import TwitterMiner
+from src.tw_processor import TwitterProcessor
 
 
 class TwitterAnalysisApp:
@@ -41,7 +41,6 @@ class TwitterAnalysisApp:
         print("Update Tokens: Done")
 
     def update_followers(self, target_user):
-
         stored_users = self.db.listUsers()
         cursor = self.miner.followersCursor(screen_name=target_user, limit=0)
 
@@ -63,7 +62,6 @@ class TwitterAnalysisApp:
         print("Update Followers: Done")
 
     def update_friends(self, target_user):
-
         stored_users = self.db.listUsers()
         cursor = self.miner.friendsCursor(screen_name=target_user, limit=0)
 
@@ -95,7 +93,7 @@ class TwitterAnalysisApp:
             reviewed_counter = 0
             if follower.followers_count >= 3200 and reviewed_counter == 0:
                 follower.reviewed = 1
-            while True:
+            while reviewed_counter < 100:
                 # TODO: intentar paralelizarlo con concurrent.futures:
                 try:
                     user = cursor.next()
@@ -151,3 +149,11 @@ class TwitterAnalysisApp:
             print(f"Follower {follower.screen_name} reviewed.")
         self.db.session.commit()
         print("Second Grade Search: Done")
+
+    def export_tables_to_csv(self):
+        for table in self.db.tables:
+            self.db._export_table_to_csv(table)
+            print(f"table {table.__tablename__} exported to csv.")
+
+    def create_tables(self):
+        self.db.create_tables()

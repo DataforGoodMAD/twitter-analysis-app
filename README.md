@@ -20,7 +20,7 @@ Setup instructions:
    pip install -r requirements.txt
    ```
 
-4. Download the data for NLTK with: 
+4. Download the data for NLTK with:
    ```
    python -m nltk.downloader wordnet stopwords
    ```
@@ -44,5 +44,5 @@ Setup instructions:
 6. To build a standalone executable file, you can use PyInstaller (the required version is already included in the `requirements.txt`). You can do it with:
 
    ```
-   pyinstaller --onefile -c -n twitter_influence --additional-hooks-dir pyinstaller-hooks
+   pyinstaller --onefile -c -n twitter_influence --additional-hooks-dir pyinstaller-hooks./app.py
    ```
